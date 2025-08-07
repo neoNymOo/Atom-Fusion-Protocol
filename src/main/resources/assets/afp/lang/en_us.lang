@@ -1,0 +1,40 @@
+item.x03_helmet.name=X-03 Helmet
+item.x03_chestplate.name=X-03 Chestplate
+item.x03_leggings.name=X-03 Leggings
+item.x03_boots.name=X-03 Boots
+
+item.x02_helmet.name=X-02 Helmet
+item.x02_chestplate.name=X-02 Chestplate
+item.x02_leggings.name=X-02 Leggings
+item.x02_boots.name=X-02 Boots
+
+item.x01_helmet.name=X-01 Helmet
+item.x01_chestplate.name=X-01 Chestplate
+item.x01_leggings.name=X-01 Leggings
+item.x01_boots.name=X-01 Boots
+
+item.t60_helmet.name=T-60 Helmet
+item.t60_chestplate.name=T-60 Chestplate
+item.t60_leggings.name=T-60 Leggings
+item.t60_boots.name=T-60 Boots
+
+item.t51_helmet.name=T-51 Helmet
+item.t51_chestplate.name=T-51 Chestplate
+item.t51_leggings.name=T-51 Leggings
+item.t51_boots.name=T-51 Boots
+
+item.t45_helmet.name=T-45 Helmet
+item.t45_chestplate.name=T-45 Chestplate
+item.t45_leggings.name=T-45 Leggings
+item.t45_boots.name=T-45 Boots
+
+item.exo_helmet.name=Exoskeleton Helmet
+item.exo_chestplate.name=Exoskeleton Chestplate
+item.exo_leggings.name=Exoskeleton Leggings
+item.exo_boots.name=Exoskeleton Boots
+
+itemGroup.tabpowerarmor=Power Armor
+itemGroup.tabequipment=Equipment
+
+key.category.afp=Atom: Fusion Protocol
+key.afp.exit_power_armor=Exit Power Armor

@@ -1,0 +1,40 @@
+item.x03_helmet.name=Шлем X-03
+item.x03_chestplate.name=Нагрудник X-03
+item.x03_leggings.name=Поножи X-03
+item.x03_boots.name=Ботинки X-03
+
+item.x02_helmet.name=Шлем X-02
+item.x02_chestplate.name=Нагрудник X-02
+item.x02_leggings.name=Поножи X-02
+item.x02_boots.name=Ботинки X-02
+
+item.x01_helmet.name=Шлем X-01
+item.x01_chestplate.name=Нагрудник X-01
+item.x01_leggings.name=Поножи X-01
+item.x01_boots.name=Ботинки X-01
+
+item.t60_helmet.name=Шлем T-60
+item.t60_chestplate.name=Нагрудник T-60
+item.t60_leggings.name=Поножи T-60
+item.t60_boots.name=Ботинки T-60
+
+item.t51_helmet.name=Шлем T-51
+item.t51_chestplate.name=Нагрудник T-51
+item.t51_leggings.name=Поножи T-51
+item.t51_boots.name=Ботинки T-51
+
+item.t45_helmet.name=Шлем T-45
+item.t45_chestplate.name=Нагрудник T-45
+item.t45_leggings.name=Поножи T-45
+item.t45_boots.name=Ботинки T-45
+
+item.exo_helmet.name=Шлем экзоскелета
+item.exo_chestplate.name=Нагрудник экзоскелета
+item.exo_leggings.name=Поножи экзоскелета
+item.exo_boots.name=Ботинки экзоскелета
+
+itemGroup.tabpowerarmor=Силовая броня
+itemGroup.tabequipment=Оборудование
+
+key.category.afp=Atom: Fusion Protocol
+key.afp.exit_power_armor=Выйти из силовой брони

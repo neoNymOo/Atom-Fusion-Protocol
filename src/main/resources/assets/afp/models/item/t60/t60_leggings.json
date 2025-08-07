@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "afp:item/t60/t60_leggings"
+  }
+}

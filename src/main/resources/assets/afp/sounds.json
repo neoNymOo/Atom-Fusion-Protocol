@@ -1,0 +1,74 @@
+{
+  "exo_click": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "afp:exo_click",
+        "stream": false
+      }
+    ]
+  },
+  "servo_step1": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "afp:servo_step1",
+        "stream": false
+      }
+    ]
+  },
+  "fusion_core": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "afp:fusion_core",
+        "stream": false
+      }
+    ]
+  },
+  "switch_click": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "afp:switch_click",
+        "stream": false
+      }
+    ]
+  },
+  "servo_step2": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "afp:servo_step2",
+        "stream": false
+      }
+    ]
+  },
+  "servo_step3": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "afp:servo_step3",
+        "stream": false
+      }
+    ]
+  },
+  "poweron": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "afp:poweron",
+        "stream": false
+      }
+    ]
+  },
+  "wrench": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "afp:wrench",
+        "stream": false
+      }
+    ]
+  }
+}
