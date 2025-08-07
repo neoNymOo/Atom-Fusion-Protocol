@@ -103,7 +103,7 @@ public class EntityExoskeletonUtil {
     public static void tryExitExoskeleton(World world, EntityPlayer player) {
         // Проверка наличия нагрудника
         ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        if (!PowerArmorUtil.isWearingPowerArmor(chestplate) || player.isRiding()) {
+        if (!PowerArmorUtil.isPowerArmor(chestplate) || player.isRiding()) {
             return;
         }
 

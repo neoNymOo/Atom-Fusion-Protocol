@@ -13,7 +13,7 @@ public class LivingJumpEventHandler {
         if (event.getEntity() instanceof EntityPlayer) {
             EntityPlayer player = (EntityPlayer) event.getEntity();
             ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-            if (PowerArmorUtil.isWearingPowerArmor(chestplate)) {
+            if (PowerArmorUtil.isPowerArmor(chestplate)) {
                 PowerArmorUtil.playServoStepSound(player.world, player.posX, player.posY, player.posZ);
             }
         }

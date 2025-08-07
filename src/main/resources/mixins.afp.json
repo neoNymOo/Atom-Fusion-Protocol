@@ -1,13 +1,11 @@
 {
-  "package": "com.nymoo.afp.common.mixins",
+  "package": "com.nymoo.afp.common.mixins.impl",
   "required": true,
   "refmap": "${mixin_refmap}",
   "target": "@env(DEFAULT)",
   "minVersion": "0.8.7",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [
-    "MixinSlot"
-  ],
+  "mixins": ["MixinSlot", "MixinItemArmor"],
   "server": [],
   "client": []
 }

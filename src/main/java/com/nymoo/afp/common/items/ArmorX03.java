@@ -6,6 +6,7 @@ import com.nymoo.afp.common.tabs.TabPowerArmor;
 import com.nymoo.afp.common.utils.PowerArmorUtil;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -61,6 +62,11 @@ public class ArmorX03 extends ElementsAFP.ModElement {
                 }
                 return helmetModel;
             }
+
+            @Override
+            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+                return false;
+            }
         }.setTranslationKey("x03_helmet").setRegistryName("x03_helmet").setCreativeTab(TabPowerArmor.tab));
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.CHEST) {
@@ -83,6 +89,11 @@ public class ArmorX03 extends ElementsAFP.ModElement {
             }
 
             @Override
+            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+                return false;
+            }
+
+            @Override
             public void onArmorTick(World world, EntityPlayer player, ItemStack stack) {
                 PowerArmorUtil.handleStepSound(world, player);
             }
@@ -97,6 +108,11 @@ public class ArmorX03 extends ElementsAFP.ModElement {
                 }
                 return leggingsModel;
             }
+
+            @Override
+            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+                return false;
+            }
         }.setTranslationKey("x03_leggings").setRegistryName("x03_leggings").setCreativeTab(TabPowerArmor.tab));
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.FEET) {
@@ -107,6 +123,11 @@ public class ArmorX03 extends ElementsAFP.ModElement {
                     bootsModel = new ModelPowerArmor(3, "x03", false);
                 }
                 return bootsModel;
+            }
+
+            @Override
+            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+                return false;
             }
         }.setTranslationKey("x03_boots").setRegistryName("x03_boots").setCreativeTab(TabPowerArmor.tab));
     }

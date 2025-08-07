@@ -3,14 +3,18 @@ package com.nymoo.afp.common.items;
 import com.nymoo.afp.ElementsAFP;
 import com.nymoo.afp.common.render.model.armor.ModelPowerArmor;
 import com.nymoo.afp.common.tabs.TabPowerArmor;
+import com.nymoo.afp.common.utils.PowerArmorUtil;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.common.util.EnumHelper;
@@ -58,6 +62,11 @@ public class ArmorX02 extends ElementsAFP.ModElement {
                 }
                 return helmetModel;
             }
+
+            @Override
+            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+                return false;
+            }
         }.setTranslationKey("x02_helmet").setRegistryName("x02_helmet").setCreativeTab(TabPowerArmor.tab));
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.CHEST) {
@@ -78,6 +87,16 @@ public class ArmorX02 extends ElementsAFP.ModElement {
                     return chestplateModel;
                 }
             }
+
+            @Override
+            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+                return false;
+            }
+
+            @Override
+            public void onArmorTick(World world, EntityPlayer player, ItemStack stack) {
+                PowerArmorUtil.handleStepSound(world, player);
+            }
         }.setTranslationKey("x02_chestplate").setRegistryName("x02_chestplate").setCreativeTab(TabPowerArmor.tab));
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.LEGS) {
@@ -89,6 +108,11 @@ public class ArmorX02 extends ElementsAFP.ModElement {
                 }
                 return leggingsModel;
             }
+
+            @Override
+            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+                return false;
+            }
         }.setTranslationKey("x02_leggings").setRegistryName("x02_leggings").setCreativeTab(TabPowerArmor.tab));
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.FEET) {
@@ -99,6 +123,11 @@ public class ArmorX02 extends ElementsAFP.ModElement {
                     bootsModel = new ModelPowerArmor(3, "x02", false);
                 }
                 return bootsModel;
+            }
+
+            @Override
+            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+                return false;
             }
         }.setTranslationKey("x02_boots").setRegistryName("x02_boots").setCreativeTab(TabPowerArmor.tab));
     }

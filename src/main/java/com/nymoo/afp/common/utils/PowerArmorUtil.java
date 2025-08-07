@@ -89,7 +89,7 @@ public class PowerArmorUtil {
      * @param stack Предмет для проверки
      * @return true если надет нагрудник силовой брони
      */
-    public static boolean isWearingPowerArmor(ItemStack stack) {
+    public static boolean isPowerArmor(ItemStack stack) {
         if (stack.isEmpty()) {
             return false;
         }
