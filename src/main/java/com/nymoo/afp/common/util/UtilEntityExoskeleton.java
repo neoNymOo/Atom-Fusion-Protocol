@@ -1,7 +1,7 @@
-package com.nymoo.afp.common.utils;
+package com.nymoo.afp.common.util;
 
-import com.nymoo.afp.common.entities.EntityExoskeleton;
-import com.nymoo.afp.common.items.ArmorExo;
+import com.nymoo.afp.common.entity.EntityExoskeleton;
+import com.nymoo.afp.common.item.ArmorExo;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
@@ -14,7 +14,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class EntityExoskeletonUtil {
+public class UtilEntityExoskeleton {
     private static final SoundEvent EXO_CLICK_SOUND = SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("afp", "exo_click"));
     private static final SoundEvent POWERON_SOUND = SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("afp", "poweron"));
     private static final EntityEquipmentSlot[] ARMOR_SLOTS = {EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST, EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET};
@@ -103,7 +103,7 @@ public class EntityExoskeletonUtil {
     public static void tryExitExoskeleton(World world, EntityPlayer player) {
         // Проверка наличия нагрудника
         ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        if (!PowerArmorUtil.isPowerArmor(chestplate) || player.isRiding()) {
+        if (!UtilPowerArmor.isPowerArmor(chestplate) || player.isRiding()) {
             return;
         }
 

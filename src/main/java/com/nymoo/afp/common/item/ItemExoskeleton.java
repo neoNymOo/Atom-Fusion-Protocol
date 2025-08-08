@@ -1,8 +1,8 @@
-package com.nymoo.afp.common.items;
+package com.nymoo.afp.common.item;
 
-import com.nymoo.afp.ElementsAFP;
-import com.nymoo.afp.common.entities.EntityExoskeleton;
-import com.nymoo.afp.common.tabs.TabEquipment;
+import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.entity.EntityExoskeleton;
+import com.nymoo.afp.common.tab.TabEquipment;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -18,12 +18,12 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@ElementsAFP.ModElement.Tag
-public class ItemExoskeleton extends ElementsAFP.ModElement {
+@ModElementRegistry.ModElement.Tag
+public class ItemExoskeleton extends ModElementRegistry.ModElement {
     @GameRegistry.ObjectHolder("afp:exoskeleton")
     public static final Item itemExoskeleton = null;
 
-    public ItemExoskeleton(ElementsAFP instance) {
+    public ItemExoskeleton(ModElementRegistry instance) {
         super(instance, 1);
     }
 
@@ -48,9 +48,7 @@ public class ItemExoskeleton extends ElementsAFP.ModElement {
         }
 
         @Override
-        public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos,
-                                          EnumHand hand, EnumFacing facing,
-                                          float hitX, float hitY, float hitZ) {
+        public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
             BlockPos placementPos = pos.offset(facing);
 
             if (!world.isRemote && player.canPlayerEdit(placementPos, facing, player.getHeldItem(hand))) {
@@ -58,7 +56,6 @@ public class ItemExoskeleton extends ElementsAFP.ModElement {
 
                 float rotationYaw = MathHelper.wrapDegrees(player.rotationYaw + 180.0F);
 
-                // Установка позиции и углов поворота
                 entity.setLocationAndAngles(
                         placementPos.getX() + 0.5,
                         placementPos.getY(),
@@ -67,7 +64,6 @@ public class ItemExoskeleton extends ElementsAFP.ModElement {
                         0
                 );
 
-                // Проверка возможности размещения
                 if (world.getCollisionBoxes(entity, entity.getEntityBoundingBox()).isEmpty() &&
                         world.getEntitiesWithinAABBExcludingEntity(entity, entity.getEntityBoundingBox()).isEmpty()) {
                     world.spawnEntity(entity);

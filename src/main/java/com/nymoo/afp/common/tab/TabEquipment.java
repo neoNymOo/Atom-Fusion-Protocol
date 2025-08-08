@@ -1,27 +1,27 @@
-package com.nymoo.afp.common.tabs;
+package com.nymoo.afp.common.tab;
 
-import com.nymoo.afp.ElementsAFP;
-import com.nymoo.afp.common.items.ArmorX02;
+import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.item.ArmorT45;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@ElementsAFP.ModElement.Tag
-public class TabPowerArmor extends ElementsAFP.ModElement {
+@ModElementRegistry.ModElement.Tag
+public class TabEquipment extends ModElementRegistry.ModElement {
     public static CreativeTabs tab;
 
-    public TabPowerArmor(ElementsAFP instance) {
-        super(instance, 1);
+    public TabEquipment(ModElementRegistry instance) {
+        super(instance, 2);
     }
 
     @Override
     public void initElements() {
-        tab = new CreativeTabs("tabpowerarmor") {
+        tab = new CreativeTabs("tabequipment") {
             @SideOnly(Side.CLIENT)
             @Override
             public ItemStack createIcon() {
-                return new ItemStack(ArmorX02.helmet);
+                return new ItemStack(ArmorT45.helmet);
             }
         };
     }

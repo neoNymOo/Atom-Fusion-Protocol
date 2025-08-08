@@ -33,6 +33,7 @@ item.exo_chestplate.name=Exoskeleton Chestplate
 item.exo_leggings.name=Exoskeleton Leggings
 item.exo_boots.name=Exoskeleton Boots
 
+item.exoskeleton.name=Exoskeleton
 itemGroup.tabpowerarmor=Power Armor
 itemGroup.tabequipment=Equipment
 

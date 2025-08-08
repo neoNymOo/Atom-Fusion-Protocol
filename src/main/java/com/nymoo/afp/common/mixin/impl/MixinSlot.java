@@ -1,6 +1,6 @@
-package com.nymoo.afp.common.mixins.impl;
+package com.nymoo.afp.common.mixin.impl;
 
-import com.nymoo.afp.common.utils.PowerArmorUtil;
+import com.nymoo.afp.common.util.UtilPowerArmor;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
@@ -23,7 +23,7 @@ public abstract class MixinSlot {
         if (!(this.inventory instanceof InventoryPlayer)) return;
         if (this.slotIndex < 36 || this.slotIndex > 39) return;
 
-        if (!this.getStack().isEmpty() && PowerArmorUtil.isPowerArmor(this.getStack())) {
+        if (!this.getStack().isEmpty() && UtilPowerArmor.isPowerArmor(this.getStack())) {
             cir.setReturnValue(false);
         }
     }

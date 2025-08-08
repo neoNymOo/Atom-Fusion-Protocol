@@ -1,9 +1,9 @@
-package com.nymoo.afp.common.items;
+package com.nymoo.afp.common.item;
 
-import com.nymoo.afp.ElementsAFP;
-import com.nymoo.afp.common.render.model.armor.ModelPowerArmor;
-import com.nymoo.afp.common.tabs.TabPowerArmor;
-import com.nymoo.afp.common.utils.PowerArmorUtil;
+import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
+import com.nymoo.afp.common.tab.TabPowerArmor;
+import com.nymoo.afp.common.util.UtilPowerArmor;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.Entity;
@@ -13,6 +13,9 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -22,35 +25,35 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@ElementsAFP.ModElement.Tag
-public class ArmorT51 extends ElementsAFP.ModElement {
-    @GameRegistry.ObjectHolder("afp:t51_helmet")
+@ModElementRegistry.ModElement.Tag
+public class ArmorX02 extends ModElementRegistry.ModElement {
+    @GameRegistry.ObjectHolder("afp:x02_helmet")
     public static final Item helmet = null;
-    @GameRegistry.ObjectHolder("afp:t51_chestplate")
+    @GameRegistry.ObjectHolder("afp:x02_chestplate")
     public static final Item body = null;
-    @GameRegistry.ObjectHolder("afp:t51_leggings")
+    @GameRegistry.ObjectHolder("afp:x02_leggings")
     public static final Item legs = null;
-    @GameRegistry.ObjectHolder("afp:t51_boots")
+    @GameRegistry.ObjectHolder("afp:x02_boots")
     public static final Item boots = null;
 
     @SideOnly(Side.CLIENT)
-    private ModelPowerArmor helmetModel;
+    private PowerArmorModel helmetModel;
     @SideOnly(Side.CLIENT)
-    private ModelPowerArmor chestplateModel;
+    private PowerArmorModel chestplateModel;
     @SideOnly(Side.CLIENT)
-    private ModelPowerArmor chestplateModelJet;
+    private PowerArmorModel chestplateModelJet;
     @SideOnly(Side.CLIENT)
-    private ModelPowerArmor leggingsModel;
+    private PowerArmorModel leggingsModel;
     @SideOnly(Side.CLIENT)
-    private ModelPowerArmor bootsModel;
+    private PowerArmorModel bootsModel;
 
-    public ArmorT51(ElementsAFP instance) {
-        super(instance, 5);
+    public ArmorX02(ModElementRegistry instance) {
+        super(instance, 2);
     }
 
     @Override
     public void initElements() {
-        ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial("t51", "minecraft:diamond", 69, new int[]{12, 20, 25, 15}, 0,
+        ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial("x02", "minecraft:diamond", 12, new int[]{17, 22, 27, 17}, 0,
                 (net.minecraft.util.SoundEvent) net.minecraft.util.SoundEvent.REGISTRY.getObject(new ResourceLocation("")), 4f);
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.HEAD) {
@@ -58,7 +61,7 @@ public class ArmorT51 extends ElementsAFP.ModElement {
             @SideOnly(Side.CLIENT)
             public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
                 if (helmetModel == null) {
-                    helmetModel = new ModelPowerArmor(0, "t51", false);
+                    helmetModel = new PowerArmorModel(0, "x02", false);
                 }
                 return helmetModel;
             }
@@ -67,7 +70,12 @@ public class ArmorT51 extends ElementsAFP.ModElement {
             public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
                 return false;
             }
-        }.setTranslationKey("t51_helmet").setRegistryName("t51_helmet").setCreativeTab(TabPowerArmor.tab));
+
+            @Override
+            public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+                return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
+            }
+        }.setTranslationKey("x02_helmet").setRegistryName("x02_helmet").setCreativeTab(TabPowerArmor.tab));
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.CHEST) {
             @Override
@@ -77,12 +85,12 @@ public class ArmorT51 extends ElementsAFP.ModElement {
 
                 if (jetpack) {
                     if (chestplateModelJet == null) {
-                        chestplateModelJet = new ModelPowerArmor(1, "t51", true);
+                        chestplateModelJet = new PowerArmorModel(1, "x02", true);
                     }
                     return chestplateModelJet;
                 } else {
                     if (chestplateModel == null) {
-                        chestplateModel = new ModelPowerArmor(1, "t51", false);
+                        chestplateModel = new PowerArmorModel(1, "x02", false);
                     }
                     return chestplateModel;
                 }
@@ -94,17 +102,22 @@ public class ArmorT51 extends ElementsAFP.ModElement {
             }
 
             @Override
-            public void onArmorTick(World world, EntityPlayer player, ItemStack stack) {
-                PowerArmorUtil.handleStepSound(world, player);
+            public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+                return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
             }
-        }.setTranslationKey("t51_chestplate").setRegistryName("t51_chestplate").setCreativeTab(TabPowerArmor.tab));
+
+            @Override
+            public void onArmorTick(World world, EntityPlayer player, ItemStack stack) {
+                UtilPowerArmor.handleStepSound(world, player);
+            }
+        }.setTranslationKey("x02_chestplate").setRegistryName("x02_chestplate").setCreativeTab(TabPowerArmor.tab));
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.LEGS) {
             @Override
             @SideOnly(Side.CLIENT)
             public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
                 if (leggingsModel == null) {
-                    leggingsModel = new ModelPowerArmor(2, "t51", false);
+                    leggingsModel = new PowerArmorModel(2, "x02", false);
                 }
                 return leggingsModel;
             }
@@ -113,14 +126,19 @@ public class ArmorT51 extends ElementsAFP.ModElement {
             public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
                 return false;
             }
-        }.setTranslationKey("t51_leggings").setRegistryName("t51_leggings").setCreativeTab(TabPowerArmor.tab));
+
+            @Override
+            public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+                return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
+            }
+        }.setTranslationKey("x02_leggings").setRegistryName("x02_leggings").setCreativeTab(TabPowerArmor.tab));
 
         elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.FEET) {
             @Override
             @SideOnly(Side.CLIENT)
             public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
                 if (bootsModel == null) {
-                    bootsModel = new ModelPowerArmor(3, "t51", false);
+                    bootsModel = new PowerArmorModel(3, "x02", false);
                 }
                 return bootsModel;
             }
@@ -129,26 +147,31 @@ public class ArmorT51 extends ElementsAFP.ModElement {
             public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
                 return false;
             }
-        }.setTranslationKey("t51_boots").setRegistryName("t51_boots").setCreativeTab(TabPowerArmor.tab));
+
+            @Override
+            public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+                return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
+            }
+        }.setTranslationKey("x02_boots").setRegistryName("x02_boots").setCreativeTab(TabPowerArmor.tab));
     }
 
     @SideOnly(Side.CLIENT)
     @Override
     public void registerModels(ModelRegistryEvent event) {
-        ModelLoader.setCustomModelResourceLocation(helmet, 0, new ModelResourceLocation("afp:t51/t51_helmet", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(legs, 0, new ModelResourceLocation("afp:t51/t51_leggings", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(boots, 0, new ModelResourceLocation("afp:t51/t51_boots", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(helmet, 0, new ModelResourceLocation("afp:x02/x02_helmet", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(legs, 0, new ModelResourceLocation("afp:x02/x02_leggings", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(boots, 0, new ModelResourceLocation("afp:x02/x02_boots", "inventory"));
 
         ModelLoader.setCustomMeshDefinition(body, stack -> {
             boolean jetpack = stack.getTagCompound() != null && stack.getTagCompound().getBoolean("jetpack");
-            String modelPath = jetpack ? "afp:t51/t51_j_chestplate" : "afp:t51/t51_chestplate";
+            String modelPath = jetpack ? "afp:x02/x02_j_chestplate" : "afp:x02/x02_chestplate";
             return new ModelResourceLocation(modelPath, "inventory");
         });
 
         ModelLoader.registerItemVariants(
                 body,
-                new ModelResourceLocation("afp:t51/t51_chestplate", "inventory"),
-                new ModelResourceLocation("afp:t51/t51_j_chestplate", "inventory")
+                new ModelResourceLocation("afp:x02/x02_chestplate", "inventory"),
+                new ModelResourceLocation("afp:x02/x02_j_chestplate", "inventory")
         );
     }
 }

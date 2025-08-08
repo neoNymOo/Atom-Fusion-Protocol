@@ -1,4 +1,4 @@
-package com.nymoo.afp.common.utils;
+package com.nymoo.afp.common.util;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -12,7 +12,7 @@ import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.lang.reflect.Field;
 
-public class PowerArmorUtil {
+public class UtilPowerArmor {
     // Звуковые эффекты шагов сервоприводов
     private static final SoundEvent[] SERVO_SOUNDS = {
             SoundEvent.REGISTRY.getObject(new ResourceLocation("afp:servo_step1")),

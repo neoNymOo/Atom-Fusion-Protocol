@@ -1,8 +1,8 @@
-package com.nymoo.afp.common.keybinds;
+package com.nymoo.afp.common.keybind;
 
 import com.nymoo.afp.AtomFusionProtocol;
-import com.nymoo.afp.ElementsAFP;
-import com.nymoo.afp.common.utils.EntityExoskeletonUtil;
+import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.util.UtilEntityExoskeleton;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
@@ -20,11 +20,11 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 
-@ElementsAFP.ModElement.Tag
-public class KeybindingExitPowerArmor extends ElementsAFP.ModElement {
+@ModElementRegistry.ModElement.Tag
+public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
     private KeyBinding keys;
 
-    public KeybindingExitPowerArmor(ElementsAFP instance) {
+    public KeybindingExitPowerArmor(ModElementRegistry instance) {
         super(instance, 1);
     }
 
@@ -63,7 +63,7 @@ public class KeybindingExitPowerArmor extends ElementsAFP.ModElement {
             EntityPlayerMP player = context.getServerHandler().player;
             player.getServerWorld().addScheduledTask(() -> {
                 if (player != null && !player.world.isRemote) {
-                    EntityExoskeletonUtil.tryExitExoskeleton(player.world, player);
+                    UtilEntityExoskeleton.tryExitExoskeleton(player.world, player);
                 }
             });
             return null;

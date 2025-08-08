@@ -11,14 +11,14 @@ import org.lwjgl.opengl.GL11;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ModelPowerArmor extends ModelArmorBase {
+public class PowerArmorModel extends AbstractArmorModel {
     private static final Map<String, IModelCustom> MODEL_CACHE = new HashMap<>();
     private static final Map<String, IModelCustom> JET_MODEL_CACHE = new HashMap<>();
 
     private final String armorType;
     private final boolean hasJetpackVariant;
 
-    public ModelPowerArmor(int type, String armorType, boolean hasJetpackVariant) {
+    public PowerArmorModel(int type, String armorType, boolean hasJetpackVariant) {
         super(type);
         this.armorType = armorType;
         this.hasJetpackVariant = hasJetpackVariant;
@@ -68,7 +68,7 @@ public class ModelPowerArmor extends ModelArmorBase {
 
         switch (type) {
             case 0:
-                head.render(scale * 1.001F);
+                head.render(scale);
                 break;
             case 1:
                 body.render(scale);

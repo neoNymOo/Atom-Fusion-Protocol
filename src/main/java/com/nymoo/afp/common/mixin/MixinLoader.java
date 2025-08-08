@@ -1,18 +1,17 @@
-package com.nymoo.afp.common.mixins;
+package com.nymoo.afp.common.mixin;
 
+import com.nymoo.afp.Tags;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import zone.rong.mixinbooter.IEarlyMixinLoader;
-import zone.rong.mixinbooter.MixinLoader;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-@MixinLoader
-@IFMLLoadingPlugin.MCVersion("1.12.2")
-@IFMLLoadingPlugin.Name("AFPCore")
-public class AFPMixinLoader implements IFMLLoadingPlugin, IEarlyMixinLoader {
+@IFMLLoadingPlugin.MCVersion(Tags.MC_VERSION)
+@IFMLLoadingPlugin.Name(Tags.MOD_ID)
+public class MixinLoader implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override
     public List<String> getMixinConfigs() {
@@ -36,7 +35,8 @@ public class AFPMixinLoader implements IFMLLoadingPlugin, IEarlyMixinLoader {
     }
 
     @Override
-    public void injectData(Map<String, Object> data) {}
+    public void injectData(Map<String, Object> data) {
+    }
 
     @Override
     public String getAccessTransformerClass() {

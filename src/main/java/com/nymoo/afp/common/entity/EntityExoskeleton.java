@@ -1,8 +1,8 @@
-package com.nymoo.afp.common.entities;
+package com.nymoo.afp.common.entity;
 
-import com.nymoo.afp.ElementsAFP;
-import com.nymoo.afp.common.items.ArmorExo;
-import com.nymoo.afp.common.utils.EntityExoskeletonUtil;
+import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.item.ArmorExo;
+import com.nymoo.afp.common.util.UtilEntityExoskeleton;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.entity.RenderBiped;
@@ -25,11 +25,11 @@ import net.minecraftforge.fml.common.registry.EntityEntryBuilder;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@ElementsAFP.ModElement.Tag
-public class EntityExoskeleton extends ElementsAFP.ModElement {
+@ModElementRegistry.ModElement.Tag
+public class EntityExoskeleton extends ModElementRegistry.ModElement {
     public static final int ENTITYID = 1;
 
-    public EntityExoskeleton(ElementsAFP instance) {
+    public EntityExoskeleton(ModElementRegistry instance) {
         super(instance, 1);
     }
 
@@ -50,7 +50,7 @@ public class EntityExoskeleton extends ElementsAFP.ModElement {
             RenderBiped<Exoskeleton> renderer = new RenderBiped<Exoskeleton>(renderManager, new ModelBiped(), 0.5f) {
                 @Override
                 protected ResourceLocation getEntityTexture(Exoskeleton entity) {
-                    return new ResourceLocation("afp:textures/other/blank.png");
+                    return new ResourceLocation("afp:textures/misc/blank.png");
                 }
             };
             renderer.addLayer(new LayerBipedArmor(renderer) {
@@ -151,7 +151,7 @@ public class EntityExoskeleton extends ElementsAFP.ModElement {
                     break;
                 }
             }
-            EntityExoskeletonUtil.handleInteraction(world, player, hand, this, clickedSlot);
+            UtilEntityExoskeleton.handleInteraction(world, player, hand, this, clickedSlot);
             return true;
         }
     }

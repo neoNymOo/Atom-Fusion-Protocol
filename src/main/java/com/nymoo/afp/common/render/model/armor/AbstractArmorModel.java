@@ -6,7 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.player.EntityPlayer;
 
-public class ModelArmorBase extends ModelBiped {
+public class AbstractArmorModel extends ModelBiped {
 
     int type;
 
@@ -19,7 +19,7 @@ public class ModelArmorBase extends ModelBiped {
     ModelRendererObj leftFoot;
     ModelRendererObj rightFoot;
 
-    public ModelArmorBase(int type) {
+    public AbstractArmorModel(int type) {
         this.type = type;
 
         head = new ModelRendererObj(null);

@@ -33,6 +33,7 @@ item.exo_chestplate.name=Нагрудник экзоскелета
 item.exo_leggings.name=Поножи экзоскелета
 item.exo_boots.name=Ботинки экзоскелета
 
+item.exoskeleton.name=Экзоскелет
 itemGroup.tabpowerarmor=Силовая броня
 itemGroup.tabequipment=Оборудование
 

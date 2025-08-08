@@ -166,12 +166,14 @@ processResources {
     inputs.property 'mod_id', propertyString('mod_id')
     inputs.property 'mod_name', propertyString('mod_name')
     inputs.property 'mod_version', propertyString('mod_version')
+    inputs.property 'mc_version', propertyString('mc_version')
     inputs.property 'mod_description', propertyString('mod_description')
     inputs.property 'mod_authors', "${propertyStringList('mod_authors', ',').join(', ')}"
     inputs.property 'mod_credits', propertyString('mod_credits')
     inputs.property 'mod_url', propertyString('mod_url')
     inputs.property 'mod_update_json', propertyString('mod_update_json')
     inputs.property 'mod_logo_path', propertyString('mod_logo_path')
+    inputs.property 'mod_dependencies', propertyString('mod_dependencies')
     inputs.property 'mixin_refmap', propertyString('mixin_refmap')
     inputs.property 'mixin_package', propertyString('mixin_package')
     inputs.property 'mixin_configs', propertyStringList('mixin_configs').join(' ')
@@ -184,12 +186,14 @@ processResources {
                 'mod_id': propertyString('mod_id'),
                 'mod_name': propertyString('mod_name'),
                 'mod_version': propertyString('mod_version'),
+                'mc_version': propertyString('mc_version'),
                 'mod_description': propertyString('mod_description'),
                 'mod_authors': "${propertyStringList('mod_authors', ',').join(', ')}",
                 'mod_credits': propertyString('mod_credits'),
                 'mod_url': propertyString('mod_url'),
                 'mod_update_json': propertyString('mod_update_json'),
                 'mod_logo_path': propertyString('mod_logo_path'),
+                'mod_dependencies': propertyString('mod_dependencies'),
                 'mixin_refmap': propertyString('mixin_refmap'),
                 'mixin_package': propertyString('mixin_package')
         )
