@@ -33,9 +33,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.Supplier;
 
-// Реестр всех элементов мода
 public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
-    // Коллекции для хранения элементов мода
     public final List<ModElement> elements = new ArrayList<>();
     public final List<Supplier<Block>> blocks = new ArrayList<>();
     public final List<Supplier<Item>> items = new ArrayList<>();
@@ -43,11 +41,9 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
     public final List<Supplier<EntityEntry>> entities = new ArrayList<>();
     public final List<Supplier<Potion>> potions = new ArrayList<>();
 
-    // Реестр звуков мода
     private static final Map<ResourceLocation, SoundEvent> SOUNDS = new HashMap<>();
-    private int messageID = 0; // Счетчик ID сетевых сообщений
+    private int messageID = 0;
 
-    // Статическая инициализация звуков
     static {
         Arrays.asList("exo_click", "servo_step1", "servo_step2", "servo_step3", "fusion_core", "wrench", "switch_click", "poweron")
                 .forEach(name -> SOUNDS.put(
@@ -56,15 +52,17 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
                 ));
     }
 
-    // Предварительная инициализация: загрузка элементов, сортировка
-    public void preInit(FMLPreInitializationEvent event) {
-        loadModElements(event); // Загрузка классов через reflection
-        Collections.sort(elements); // Сортировка элементов
-        elements.forEach(ModElement::initElements); // Инициализация элементов
-        registerNetworkMessages(); // Регистрация сетевых сообщений
+    public static SoundEvent getSound(ResourceLocation location) {
+        return SOUNDS.get(location);
     }
 
-    // Загрузка классов, помеченных аннотацией @ModElement.Tag
+    public void preInit(FMLPreInitializationEvent event) {
+        loadModElements(event);
+        Collections.sort(elements);
+        elements.forEach(ModElement::initElements);
+        registerNetworkMessages();
+    }
+
     private void loadModElements(FMLPreInitializationEvent event) {
         for (ASMDataTable.ASMData asmData : event.getAsmData().getAll(ModElement.Tag.class.getName())) {
             try {
@@ -79,7 +77,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         }
     }
 
-    // Регистрация сетевых сообщений
     private void registerNetworkMessages() {
         addNetworkMessage(
                 ModDataSyncManager.WorldSavedDataSyncMessageHandler.class,
@@ -88,7 +85,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         );
     }
 
-    // Регистрация звуков в игре
     public void registerSounds(RegistryEvent.Register<net.minecraft.util.SoundEvent> event) {
         for (Map.Entry<ResourceLocation, SoundEvent> entry : SOUNDS.entrySet()) {
             entry.getValue().setRegistryName(entry.getKey());
@@ -96,7 +92,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         }
     }
 
-    // Генерация в мире: вызов для каждого элемента
     @Override
     public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator cg, IChunkProvider cp) {
         int baseX = chunkX * 16;
@@ -108,7 +103,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         }
     }
 
-    // Обработка топлива: поиск подходящего элемента
     @Override
     public int getBurnTime(ItemStack fuel) {
         for (ModElement element : elements) {
@@ -120,7 +114,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         return 0;
     }
 
-    // Событие входа игрока: синхронизация данных
     @SubscribeEvent
     public void onPlayerLoggedIn(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
         if (event.player.world.isRemote) return;
@@ -128,11 +121,10 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         EntityPlayerMP player = (EntityPlayerMP) event.player;
         World world = player.world;
 
-        sendWorldData(player, ModDataSyncManager.MapVariables.get(world), 0); // Данные карты
-        sendWorldData(player, ModDataSyncManager.WorldVariables.get(world), 1); // Данные мира
+        sendWorldData(player, ModDataSyncManager.MapVariables.get(world), 0);
+        sendWorldData(player, ModDataSyncManager.WorldVariables.get(world), 1);
     }
 
-    // Событие смены измерения: синхронизация данных мира
     @SubscribeEvent
     public void onPlayerChangedDimension(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.player.world.isRemote) return;
@@ -143,7 +135,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         sendWorldData(player, ModDataSyncManager.WorldVariables.get(world), 1);
     }
 
-    // Отправка данных игроку
     private void sendWorldData(EntityPlayerMP player, WorldSavedData data, int type) {
         if (data != null) {
             AtomFusionProtocol.PACKET_HANDLER.sendTo(
@@ -153,7 +144,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         }
     }
 
-    // Регистрация сетевого сообщения
     public <T extends IMessage, V extends IMessage> void addNetworkMessage(
             Class<? extends IMessageHandler<T, V>> handler,
             Class<T> messageClass,
@@ -163,7 +153,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         }
     }
 
-    // Обработчик GUI (пустой)
     public static class GuiHandler implements IGuiHandler {
         @Override
         public Object getServerGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
@@ -176,7 +165,6 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         }
     }
 
-    // Геттеры для коллекций элементов
     public List<ModElement> getElements() { return elements; }
     public List<Supplier<Block>> getBlocks() { return blocks; }
     public List<Supplier<Item>> getItems() { return items; }
@@ -184,29 +172,26 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
     public List<Supplier<EntityEntry>> getEntities() { return entities; }
     public List<Supplier<Potion>> getPotions() { return potions; }
 
-    // Базовый класс для элементов мода
     public static class ModElement implements Comparable<ModElement> {
         @Retention(RetentionPolicy.RUNTIME)
-        public @interface Tag {} // Маркер для автоматической загрузки
+        public @interface Tag {}
 
         protected final ModElementRegistry elements;
-        protected final int sortid; // Порядок загрузки
+        protected final int sortid;
 
         public ModElement(ModElementRegistry elements, int sortid) {
             this.elements = elements;
             this.sortid = sortid;
         }
 
-        // Методы для переопределения в элементах
-        public void initElements() {} // Инициализация компонентов
-        public void init(FMLInitializationEvent event) {} // Основная инициализация
-        public void preInit(FMLPreInitializationEvent event) {} // Предварительная инициализация
-        public void generateWorld(Random random, int posX, int posZ, World world, int dimID, IChunkGenerator cg, IChunkProvider cp) {} // Генерация в мире
-        public void serverLoad(FMLServerStartingEvent event) {} // Загрузка на сервере
-        public void registerModels(ModelRegistryEvent event) {} // Регистрация моделей (клиент)
-        public int addFuel(ItemStack fuel) { return 0; } // Время горения топлива
+        public void initElements() {}
+        public void init(FMLInitializationEvent event) {}
+        public void preInit(FMLPreInitializationEvent event) {}
+        public void generateWorld(Random random, int posX, int posZ, World world, int dimID, IChunkGenerator cg, IChunkProvider cp) {}
+        public void serverLoad(FMLServerStartingEvent event) {}
+        public void registerModels(ModelRegistryEvent event) {}
+        public int addFuel(ItemStack fuel) { return 0; }
 
-        // Сравнение для сортировки
         @Override
         public int compareTo(ModElement other) {
             return Integer.compare(this.sortid, other.sortid);

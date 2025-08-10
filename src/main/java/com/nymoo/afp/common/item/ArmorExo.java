@@ -1,153 +1,34 @@
 package com.nymoo.afp.common.item;
 
 import com.nymoo.afp.ModElementRegistry;
-import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
-import com.nymoo.afp.common.tab.TabPowerArmor;
-import com.nymoo.afp.common.util.UtilPowerArmor;
-import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.*;
-import net.minecraft.world.World;
-import net.minecraftforge.client.event.ModelRegistryEvent;
-import net.minecraftforge.client.model.ModelLoader;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.fml.common.registry.GameRegistry;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 @ModElementRegistry.ModElement.Tag
-public class ArmorExo extends ModElementRegistry.ModElement {
-    @GameRegistry.ObjectHolder("afp:exo_helmet")
-    public static final Item helmet = null;
-    @GameRegistry.ObjectHolder("afp:exo_chestplate")
-    public static final Item body = null;
-    @GameRegistry.ObjectHolder("afp:exo_leggings")
-    public static final Item legs = null;
-    @GameRegistry.ObjectHolder("afp:exo_boots")
-    public static final Item boots = null;
-
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel helmetModel;
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel chestplateModel;
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel leggingsModel;
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel bootsModel;
+public class ArmorExo extends AbstractPowerArmor {
+    @GameRegistry.ObjectHolder("afp:exo_helmet") public static Item helmet;
+    @GameRegistry.ObjectHolder("afp:exo_chestplate") public static Item body;
+    @GameRegistry.ObjectHolder("afp:exo_leggings") public static Item legs;
+    @GameRegistry.ObjectHolder("afp:exo_boots") public static Item boots;
 
     public ArmorExo(ModElementRegistry instance) {
-        super(instance, 7);
+        super(instance, 7, "exo", false);
     }
 
     @Override
-    public void initElements() {
-        ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial("exo", "minecraft:diamond", 34, new int[]{2, 5, 6, 2}, 0,
-                (SoundEvent) SoundEvent.REGISTRY.getObject(new ResourceLocation("")), 0f);
-
-        elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.HEAD) {
-            @Override
-            @SideOnly(Side.CLIENT)
-            public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
-                if (helmetModel == null) {
-                    helmetModel = new PowerArmorModel(0, "exo", false);
-                }
-                return helmetModel;
-            }
-
-            @Override
-            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
-                return false;
-            }
-
-            @Override
-            public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
-                return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
-            }
-        }.setTranslationKey("exo_helmet").setRegistryName("exo_helmet").setCreativeTab(TabPowerArmor.tab));
-
-        elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.CHEST) {
-            @Override
-            @SideOnly(Side.CLIENT)
-            public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
-                boolean jetpack = stack.hasTagCompound() && stack.getTagCompound().getBoolean("jetpack");
-                    if (chestplateModel == null) {
-                        chestplateModel = new PowerArmorModel(1, "exo", false);
-                    }
-                    return chestplateModel;
-                }
-
-            @Override
-            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
-                return false;
-            }
-
-            @Override
-            public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
-                return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
-            }
-
-            @Override
-            public void onArmorTick(World world, EntityPlayer player, ItemStack stack) {
-                UtilPowerArmor.handleStepSound(world, player);
-            }
-        }.setTranslationKey("exo_chestplate").setRegistryName("exo_chestplate").setCreativeTab(TabPowerArmor.tab));
-
-        elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.LEGS) {
-            @Override
-            @SideOnly(Side.CLIENT)
-            public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
-                if (leggingsModel == null) {
-                    leggingsModel = new PowerArmorModel(2, "exo", false);
-                }
-                return leggingsModel;
-            }
-
-            @Override
-            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
-                return false;
-            }
-
-            @Override
-            public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
-                return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
-            }
-        }.setTranslationKey("exo_leggings").setRegistryName("exo_leggings").setCreativeTab(TabPowerArmor.tab));
-
-        elements.items.add(() -> new ItemArmor(enuma, 0, EntityEquipmentSlot.FEET) {
-            @Override
-            @SideOnly(Side.CLIENT)
-            public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
-                if (bootsModel == null) {
-                    bootsModel = new PowerArmorModel(3, "exo", false);
-                }
-                return bootsModel;
-            }
-
-            @Override
-            public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
-                return false;
-            }
-
-            @Override
-            public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
-                return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
-            }
-        }.setTranslationKey("exo_boots").setRegistryName("exo_boots").setCreativeTab(TabPowerArmor.tab));
-    }
-
-    @SideOnly(Side.CLIENT)
-    @Override
-    public void registerModels(ModelRegistryEvent event) {
-        ModelLoader.setCustomModelResourceLocation(helmet, 0, new ModelResourceLocation("afp:exo/exo_helmet", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(body, 0, new ModelResourceLocation("afp:exo/exo_chestplate", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(legs, 0, new ModelResourceLocation("afp:exo/exo_leggings", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(boots, 0, new ModelResourceLocation("afp:exo/exo_boots", "inventory"));
+    protected ItemArmor.ArmorMaterial getArmorMaterial() {
+        return EnumHelper.addArmorMaterial(
+                "exo",
+                "minecraft:diamond",
+                34,
+                new int[]{2, 5, 6, 2},
+                0,
+                (SoundEvent) SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
+                0f
+        );
     }
 }

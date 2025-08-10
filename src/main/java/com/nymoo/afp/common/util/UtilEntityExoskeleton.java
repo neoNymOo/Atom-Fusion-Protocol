@@ -2,6 +2,7 @@ package com.nymoo.afp.common.util;
 
 import com.nymoo.afp.common.entity.EntityExoskeleton;
 import com.nymoo.afp.common.item.ArmorExo;
+import com.nymoo.afp.common.item.IPowerArmor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
@@ -103,7 +104,7 @@ public class UtilEntityExoskeleton {
     public static void tryExitExoskeleton(World world, EntityPlayer player) {
         // Проверка наличия нагрудника
         ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        if (!UtilPowerArmor.isPowerArmor(chestplate) || player.isRiding()) {
+        if (!chestplate.isEmpty() && chestplate.getItem() instanceof IPowerArmor || player.isRiding()) {
             return;
         }
 

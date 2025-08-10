@@ -1,5 +1,7 @@
 package com.nymoo.afp.common.util;
 
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -7,6 +9,8 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
@@ -39,7 +43,7 @@ public class UtilPowerArmor {
      * @param player Игрок в силовой броне
      */
     public static void handleStepSound(World world, EntityPlayer player) {
-        if (world.isRemote) return; // Только на серверной стороне
+        if (world.isRemote || !player.onGround) return; // Только на серверной стороне и на земле
 
         try {
             // Получаем значения шаговых полей через reflection
@@ -58,7 +62,11 @@ public class UtilPowerArmor {
             }
 
             // Проверка условий для воспроизведения звука
-            if (player.onGround && lastStepDistance <= distanceWalkedOnStepModified) {
+            int px = MathHelper.floor(player.posX);
+            int py = MathHelper.floor(player.posY - 0.2D);
+            int pz = MathHelper.floor(player.posZ);
+            IBlockState block = player.world.getBlockState(new BlockPos(px, py, pz));
+            if (block.getMaterial() != Material.AIR && lastStepDistance <= distanceWalkedOnStepModified) {
                 playServoStepSound(world, player.posX, player.posY, player.posZ);
             }
 
@@ -70,40 +78,8 @@ public class UtilPowerArmor {
         }
     }
 
-    /**
-     * Воспроизводит случайный звук шага сервопривода
-     * @param world Мир для воспроизведения
-     * @param x Координата X
-     * @param y Координата Y
-     * @param z Координата Z
-     */
     public static void playServoStepSound(World world, double x, double y, double z) {
-        // Выбираем случайный звук из доступных вариантов
         int soundIndex = (int) (Math.random() * SERVO_SOUNDS.length);
-        // Воспроизводим звук для всех игроков в радиусе
         world.playSound(null, x, y, z, SERVO_SOUNDS[soundIndex], SoundCategory.PLAYERS, 0.55f, 1.0f);
-    }
-
-    /**
-     * Проверяет, носит ли игрок силовую броню
-     * @param stack Предмет для проверки
-     * @return true если надет нагрудник силовой брони
-     */
-    public static boolean isPowerArmor(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return false;
-        }
-        ResourceLocation regName = stack.getItem().getRegistryName();
-        if (regName == null) {
-            return false;
-        }
-        String path = regName.getPath();
-        return path.startsWith("x03_") ||
-                path.startsWith("x02_") ||
-                path.startsWith("x01_") ||
-                path.startsWith("t60_") ||
-                path.startsWith("t51_") ||
-                path.startsWith("t45_") ||
-                path.startsWith("exo_");
     }
 }
