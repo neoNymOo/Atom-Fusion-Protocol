@@ -28,6 +28,10 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
     protected Item legsItem;
     protected Item bootsItem;
 
+    public boolean isExoArmor() {
+        return false;
+    }
+
     @SideOnly(Side.CLIENT)
     private PowerArmorModel helmetModel;
     @SideOnly(Side.CLIENT)
@@ -158,6 +162,10 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
         @Override
         public void onArmorTick(World world, EntityPlayer player, ItemStack itemStack) {
             UtilPowerArmor.handleStepSound(world, player);
+
+            if (!isExoArmor()){
+                player.setInvisible(true);
+            }
         }
     }
 }

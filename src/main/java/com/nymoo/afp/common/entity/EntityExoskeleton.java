@@ -1,7 +1,6 @@
 package com.nymoo.afp.common.entity;
 
 import com.nymoo.afp.ModElementRegistry;
-import com.nymoo.afp.common.item.ArmorExo;
 import com.nymoo.afp.common.util.UtilEntityExoskeleton;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.model.ModelBiped;
@@ -28,6 +27,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @ModElementRegistry.ModElement.Tag
 public class EntityExoskeleton extends ModElementRegistry.ModElement {
     public static final int ENTITYID = 1;
+    private static final EntityEquipmentSlot[] ARMOR_SLOTS = EntityEquipmentSlot.values();
 
     public EntityExoskeleton(ModElementRegistry instance) {
         super(instance, 1);
@@ -48,9 +48,11 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
     public void preInit(FMLPreInitializationEvent event) {
         RenderingRegistry.registerEntityRenderingHandler(Exoskeleton.class, renderManager -> {
             RenderBiped<Exoskeleton> renderer = new RenderBiped<Exoskeleton>(renderManager, new ModelBiped(), 0.5f) {
+                private final ResourceLocation TEXTURE = new ResourceLocation("afp:textures/misc/blank.png");
+
                 @Override
                 protected ResourceLocation getEntityTexture(Exoskeleton entity) {
-                    return new ResourceLocation("afp:textures/misc/blank.png");
+                    return TEXTURE;
                 }
             };
             renderer.addLayer(new LayerBipedArmor(renderer) {
@@ -66,7 +68,7 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
 
     public static class Exoskeleton extends EntityCreature {
         private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        private static final double[] SLOT_HEIGHT_THRESHOLDS = {1.35, 0.9, 0.45};
+        private static final float[] SLOT_HEIGHT_THRESHOLDS = {1.35F, 0.9F, 0.45F};
         private static final EntityEquipmentSlot[] SLOT_ORDER = {
                 EntityEquipmentSlot.HEAD,
                 EntityEquipmentSlot.CHEST,
@@ -79,10 +81,12 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
             setSize(0.6f, 1.8f);
             setNoAI(true);
             enablePersistence();
-            setItemStackToSlot(EntityEquipmentSlot.HEAD, new ItemStack(ArmorExo.helmet));
-            setItemStackToSlot(EntityEquipmentSlot.CHEST, new ItemStack(ArmorExo.body));
-            setItemStackToSlot(EntityEquipmentSlot.LEGS, new ItemStack(ArmorExo.legs));
-            setItemStackToSlot(EntityEquipmentSlot.FEET, new ItemStack(ArmorExo.boots));
+            for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
+                if (slot.getSlotType() == EntityEquipmentSlot.Type.ARMOR) {
+                    // Исправлено: использование публичного метода
+                    setItemStackToSlot(slot, UtilEntityExoskeleton.getBaseArmorForSlot(slot));
+                }
+            }
         }
 
         @Override
@@ -116,12 +120,12 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
             if (!world.isRemote) {
                 mutablePos.setPos(posX, posY - 0.1, posZ);
                 IBlockState state = world.getBlockState(mutablePos);
-                if (!state.isFullBlock()) {
-                    motionY = Math.max(motionY - 0.08, -3.0);
-                    move(MoverType.SELF, 0, motionY, 0);
-                } else {
+                if (state.isFullBlock()) {
                     motionY = 0;
                     onGround = true;
+                } else {
+                    motionY = Math.max(motionY - 0.08, -3.0);
+                    move(MoverType.SELF, 0, motionY, 0);
                 }
             }
         }
@@ -135,15 +139,15 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
 
         @Override
         public boolean processInteract(EntityPlayer player, EnumHand hand) {
-            super.processInteract(player, hand);
             if (world.isRemote) return true;
+
             Vec3d eyesPos = player.getPositionEyes(1.0F);
             Vec3d lookVec = player.getLook(1.0F);
             Vec3d endPos = eyesPos.add(lookVec.x * 5, lookVec.y * 5, lookVec.z * 5);
             RayTraceResult rayTrace = getEntityBoundingBox().calculateIntercept(eyesPos, endPos);
             if (rayTrace == null) return true;
-            Vec3d hitVec = rayTrace.hitVec;
-            double hitY = hitVec.y - posY;
+
+            float hitY = (float)(rayTrace.hitVec.y - posY);
             EntityEquipmentSlot clickedSlot = SLOT_ORDER[3];
             for (int i = 0; i < SLOT_HEIGHT_THRESHOLDS.length; i++) {
                 if (hitY > SLOT_HEIGHT_THRESHOLDS[i]) {
@@ -151,6 +155,7 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
                     break;
                 }
             }
+
             UtilEntityExoskeleton.handleInteraction(world, player, hand, this, clickedSlot);
             return true;
         }

@@ -31,4 +31,9 @@ public class ArmorExo extends AbstractPowerArmor {
                 0f
         );
     }
+
+    @Override
+    public boolean isExoArmor() {
+        return true;
+    }
 }

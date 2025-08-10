@@ -1,6 +1,7 @@
 package com.nymoo.afp.common.util;
 
 import com.nymoo.afp.common.entity.EntityExoskeleton;
+import com.nymoo.afp.common.item.AbstractPowerArmor;
 import com.nymoo.afp.common.item.ArmorExo;
 import com.nymoo.afp.common.item.IPowerArmor;
 import net.minecraft.entity.player.EntityPlayer;
@@ -8,17 +9,25 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class UtilEntityExoskeleton {
-    private static final SoundEvent EXO_CLICK_SOUND = SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("afp", "exo_click"));
-    private static final SoundEvent POWERON_SOUND = SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("afp", "poweron"));
-    private static final EntityEquipmentSlot[] ARMOR_SLOTS = {EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST, EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET};
+    private static final SoundEvent EXO_CLICK_SOUND;
+    private static final SoundEvent POWERON_SOUND;
+    private static final EntityEquipmentSlot[] ARMOR_SLOTS = EntityEquipmentSlot.values();
+    private static final ItemStack BASE_HELMET = new ItemStack(ArmorExo.helmet);
+    private static final ItemStack BASE_CHESTPLATE = new ItemStack(ArmorExo.body);
+    private static final ItemStack BASE_LEGGINGS = new ItemStack(ArmorExo.legs);
+    private static final ItemStack BASE_BOOTS = new ItemStack(ArmorExo.boots);
+    private static final String SEALED_TAG = "sealed";
+    private static final String CORE_TAG = "core";
+
+    static {
+        EXO_CLICK_SOUND = SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("afp", "exo_click"));
+        POWERON_SOUND = SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("afp", "poweron"));
+    }
 
     public static void handleInteraction(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
         ItemStack heldStack = player.getHeldItem(hand);
@@ -30,28 +39,35 @@ public class UtilEntityExoskeleton {
     }
 
     private static void tryInstallPart(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot slot, ItemStack heldStack) {
-        String itemId = heldStack.getItem().getRegistryName().toString();
-        int colonIndex = itemId.indexOf(':');
-        if (colonIndex == -1) return;
-        String itemPath = itemId.substring(colonIndex + 1);
-        int underscoreIndex = itemPath.indexOf('_');
+        ResourceLocation registryName = heldStack.getItem().getRegistryName();
+        if (registryName == null) return;
+
+        String path = registryName.getPath();
+        int underscoreIndex = path.indexOf('_');
         if (underscoreIndex == -1) return;
-        String armorType = itemPath.substring(0, underscoreIndex);
-        String armorPart = itemPath.substring(underscoreIndex + 1);
+
+        String armorType = path.substring(0, underscoreIndex);
+        String armorPart = path.substring(underscoreIndex + 1);
         if (!getSlotPart(slot).equals(armorPart)) return;
+
         ItemStack currentArmor = entity.getItemStackFromSlot(slot);
         if (currentArmor.isEmpty() || !isBaseExoArmor(currentArmor, slot)) return;
         if (!checkArmorCompatibility(entity, armorType)) return;
+
         ItemStack newArmor = heldStack.copy();
         newArmor.setCount(1);
         entity.setItemStackToSlot(slot, newArmor);
+
         if (!player.isCreative()) {
             heldStack.shrink(1);
             if (heldStack.isEmpty()) {
                 player.setHeldItem(hand, ItemStack.EMPTY);
             }
         }
-        world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+
+        if (EXO_CLICK_SOUND != null) {
+            world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+        }
     }
 
     private static void tryUninstallPart(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot slot) {
@@ -60,7 +76,7 @@ public class UtilEntityExoskeleton {
 
         if (!isSealed(chestArmor)) {
             for (EntityEquipmentSlot armorSlot : ARMOR_SLOTS) {
-                if (!player.getItemStackFromSlot(armorSlot).isEmpty()) {
+                if (armorSlot.getSlotType() == EntityEquipmentSlot.Type.ARMOR && !player.getItemStackFromSlot(armorSlot).isEmpty()) {
                     return;
                 }
             }
@@ -76,13 +92,18 @@ public class UtilEntityExoskeleton {
 
         player.setHeldItem(hand, currentArmor.copy());
         entity.setItemStackToSlot(slot, getBaseArmorForSlot(slot));
-        world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+
+        if (EXO_CLICK_SOUND != null) {
+            world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+        }
     }
 
     private static void tryEnterExoskeleton(World world, EntityPlayer player, EntityExoskeleton.Exoskeleton entity) {
         entity.setDead();
 
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
+            if (slot.getSlotType() != EntityEquipmentSlot.Type.ARMOR) continue;
+
             ItemStack armorStack = entity.getItemStackFromSlot(slot);
             if (!armorStack.isEmpty()) {
                 player.setItemStackToSlot(slot, armorStack.copy());
@@ -90,10 +111,9 @@ public class UtilEntityExoskeleton {
             }
         }
 
-        if (isCore(entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST))) {
-            world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
-        } else {
-            world.playSound(null, entity.posX, entity.posY, entity.posZ, POWERON_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+        SoundEvent sound = isCore(entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST)) ? EXO_CLICK_SOUND : POWERON_SOUND;
+        if (sound != null) {
+            world.playSound(null, entity.posX, entity.posY, entity.posZ, sound, SoundCategory.PLAYERS, 1.0F, 1.0F);
         }
 
         player.rotationYaw = entity.rotationYaw;
@@ -102,53 +122,33 @@ public class UtilEntityExoskeleton {
     }
 
     public static void tryExitExoskeleton(World world, EntityPlayer player) {
-        // Проверка наличия нагрудника
+        player.setInvisible(false);
+
         ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        if (!chestplate.isEmpty() && chestplate.getItem() instanceof IPowerArmor || player.isRiding()) {
+        if ((chestplate.isEmpty() && !(chestplate.getItem() instanceof IPowerArmor) || player.isRiding())) {
             return;
         }
 
-        // Проверка свободного пространства сзади игрока
         EnumFacing facing = player.getHorizontalFacing();
         if (!isSpaceBehindPlayerClear(world, player, facing)) {
             return;
         }
+
+        EntityExoskeleton.Exoskeleton exoskeleton = new EntityExoskeleton.Exoskeleton(world);
+        exoskeleton.setLocationAndAngles(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
+        world.spawnEntity(exoskeleton);
+
         double px = player.posX;
         double py = player.posY;
         double pz = player.posZ;
-
-        // Создание сущности экзоскелета
-        EntityExoskeleton.Exoskeleton exoskeleton = new EntityExoskeleton.Exoskeleton(world);
-        exoskeleton.setLocationAndAngles(
-                px,
-                py,
-                pz,
-                player.rotationYaw,
-                player.rotationPitch
-        );
-        //здесь если игрок при выходи был sneaking то сущность также становится sneaking
-        world.spawnEntity(exoskeleton);
-
-        // Перемещение игрока
-        switch (facing) {
-            case NORTH:
-                pz += 0.5;
-                break;
-            case SOUTH:
-                pz -= 0.5;
-                break;
-            case WEST:
-                px += 0.5;
-                break;
-            case EAST:
-                px -= 0.5;
-                break;
-        }
-
+        EnumFacing opposite = facing.getOpposite();
+        px += opposite.getXOffset() * 0.5;
+        pz += opposite.getZOffset() * 0.5;
         player.setPositionAndUpdate(px, py, pz);
 
-        // Перенос брони с игрока на экзоскелет
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
+            if (slot.getSlotType() != EntityEquipmentSlot.Type.ARMOR) continue;
+
             ItemStack armorStack = player.getItemStackFromSlot(slot);
             if (!armorStack.isEmpty()) {
                 exoskeleton.setItemStackToSlot(slot, armorStack.copy());
@@ -157,35 +157,25 @@ public class UtilEntityExoskeleton {
         }
     }
 
-    private static void tryInstallCore(World world, EntityPlayer player, EntityExoskeleton.Exoskeleton entity) {
-        //это метод-заготовка на будущее
-    }
-
-    private static void tryUninstallCore(World world, EntityPlayer player, EntityExoskeleton.Exoskeleton entity) {
-        //это метод-заготовка на будущее
-    }
-
     private static boolean isBaseExoArmor(ItemStack stack, EntityEquipmentSlot slot) {
         Item item = stack.getItem();
-        switch(slot) {
-            case HEAD: return item == ArmorExo.helmet;
-            case CHEST: return item == ArmorExo.body;
-            case LEGS: return item == ArmorExo.legs;
-            case FEET: return item == ArmorExo.boots;
-            default: return false;
-        }
+        if (slot == EntityEquipmentSlot.HEAD) return item == ArmorExo.helmet;
+        if (slot == EntityEquipmentSlot.CHEST) return item == ArmorExo.body;
+        if (slot == EntityEquipmentSlot.LEGS) return item == ArmorExo.legs;
+        if (slot == EntityEquipmentSlot.FEET) return item == ArmorExo.boots;
+        return false;
     }
 
     private static boolean isSealed(ItemStack stack) {
         if (stack.isEmpty()) return false;
         NBTTagCompound tag = stack.getTagCompound();
-        return tag != null && tag.getBoolean("sealed");
+        return tag != null && tag.getBoolean(SEALED_TAG);
     }
 
     private static boolean isCore(ItemStack stack) {
         if (stack.isEmpty()) return false;
         NBTTagCompound tag = stack.getTagCompound();
-        return tag != null && tag.getBoolean("core");
+        return tag != null && tag.getBoolean(CORE_TAG);
     }
 
     private static String getSlotPart(EntityEquipmentSlot slot) {
@@ -198,26 +188,31 @@ public class UtilEntityExoskeleton {
         }
     }
 
-    private static ItemStack getBaseArmorForSlot(EntityEquipmentSlot slot) {
+    // Исправлено: метод сделан публичным для доступа из EntityExoskeleton
+    public static ItemStack getBaseArmorForSlot(EntityEquipmentSlot slot) {
         switch(slot) {
-            case HEAD: return new ItemStack(ArmorExo.helmet);
-            case CHEST: return new ItemStack(ArmorExo.body);
-            case LEGS: return new ItemStack(ArmorExo.legs);
-            case FEET: return new ItemStack(ArmorExo.boots);
+            case HEAD: return BASE_HELMET.copy();
+            case CHEST: return BASE_CHESTPLATE.copy();
+            case LEGS: return BASE_LEGGINGS.copy();
+            case FEET: return BASE_BOOTS.copy();
             default: return ItemStack.EMPTY;
         }
     }
 
     private static boolean checkArmorCompatibility(EntityExoskeleton.Exoskeleton entity, String newType) {
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
+            if (slot.getSlotType() != EntityEquipmentSlot.Type.ARMOR) continue;
+
             ItemStack armorStack = entity.getItemStackFromSlot(slot);
             if (armorStack.isEmpty() || isBaseExoArmor(armorStack, slot)) continue;
-            String armorId = armorStack.getItem().getRegistryName().toString();
-            int colonIndex = armorId.indexOf(':');
-            if (colonIndex == -1) continue;
-            String armorPath = armorId.substring(colonIndex + 1);
+
+            ResourceLocation armorLoc = armorStack.getItem().getRegistryName();
+            if (armorLoc == null) continue;
+
+            String armorPath = armorLoc.getPath();
             int underscoreIndex = armorPath.indexOf('_');
             if (underscoreIndex == -1) continue;
+
             String armorType = armorPath.substring(0, underscoreIndex);
             if (!armorType.equals(newType)) return false;
         }
@@ -229,17 +224,11 @@ public class UtilEntityExoskeleton {
         BlockPos playerPos = new BlockPos(player.posX, player.posY, player.posZ);
 
         BlockPos lowerPos = playerPos.offset(backward);
-        if (!world.isBlockLoaded(lowerPos) ||
-                world.getBlockState(lowerPos).isFullBlock()) {
+        if (!world.isBlockLoaded(lowerPos) || world.getBlockState(lowerPos).causesSuffocation()) {
             return false;
         }
 
         BlockPos upperPos = lowerPos.up();
-        if (!world.isBlockLoaded(upperPos) ||
-                world.getBlockState(upperPos).isFullBlock()) {
-            return false;
-        }
-
-        return true;
+        return world.isBlockLoaded(upperPos) && !world.getBlockState(upperPos).causesSuffocation();
     }
 }
