@@ -10,13 +10,17 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 @ModElementRegistry.ModElement.Tag
 public class ArmorT45 extends AbstractPowerArmor {
-    @GameRegistry.ObjectHolder("afp:t45_helmet") public static Item helmet;
-    @GameRegistry.ObjectHolder("afp:t45_chestplate") public static Item body;
-    @GameRegistry.ObjectHolder("afp:t45_leggings") public static Item legs;
-    @GameRegistry.ObjectHolder("afp:t45_boots") public static Item boots;
+    @GameRegistry.ObjectHolder("afp:t45_helmet")
+    public static Item helmet;
+    @GameRegistry.ObjectHolder("afp:t45_chestplate")
+    public static Item chestplate;
+    @GameRegistry.ObjectHolder("afp:t45_leggings")
+    public static Item leggings;
+    @GameRegistry.ObjectHolder("afp:t45_boots")
+    public static Item boots;
 
     public ArmorT45(ModElementRegistry instance) {
-        super(instance, 6, "t45", true);
+        super(instance, 7, "t45", true);
     }
 
     @Override
@@ -27,7 +31,7 @@ public class ArmorT45 extends AbstractPowerArmor {
                 69,
                 new int[]{12, 17, 19, 14},
                 0,
-                (SoundEvent) SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
+                SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
                 4f
         );
     }

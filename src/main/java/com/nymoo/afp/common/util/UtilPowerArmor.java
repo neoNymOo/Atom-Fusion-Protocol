@@ -38,7 +38,8 @@ public class UtilPowerArmor {
 
     /**
      * Обрабатывает логику воспроизведения звуков шагов силовой брони
-     * @param world Мир, в котором находится игрок
+     *
+     * @param world  Мир, в котором находится игрок
      * @param player Игрок в силовой броне
      */
     public static void handleStepSound(World world, EntityPlayer player) {

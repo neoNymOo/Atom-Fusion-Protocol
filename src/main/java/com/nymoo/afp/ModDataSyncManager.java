@@ -40,14 +40,6 @@ public class ModDataSyncManager {
             super(DATA_NAME, 0);
         }
 
-        @Override
-        public void readFromNBT(NBTTagCompound nbt) {}
-
-        @Override
-        public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-            return nbt;
-        }
-
         public static MapVariables get(World world) {
             MapVariables instance = (MapVariables) world.getMapStorage().getOrLoadData(MapVariables.class, DATA_NAME);
             if (instance == null) {
@@ -55,6 +47,15 @@ public class ModDataSyncManager {
                 world.getMapStorage().setData(DATA_NAME, instance);
             }
             return instance;
+        }
+
+        @Override
+        public void readFromNBT(NBTTagCompound nbt) {
+        }
+
+        @Override
+        public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+            return nbt;
         }
     }
 
@@ -65,14 +66,6 @@ public class ModDataSyncManager {
             super(DATA_NAME, 1);
         }
 
-        @Override
-        public void readFromNBT(NBTTagCompound nbt) {}
-
-        @Override
-        public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-            return nbt;
-        }
-
         public static WorldVariables get(World world) {
             WorldVariables instance = (WorldVariables) world.getMapStorage().getOrLoadData(WorldVariables.class, DATA_NAME);
             if (instance == null) {
@@ -80,6 +73,15 @@ public class ModDataSyncManager {
                 world.getMapStorage().setData(DATA_NAME, instance);
             }
             return instance;
+        }
+
+        @Override
+        public void readFromNBT(NBTTagCompound nbt) {
+        }
+
+        @Override
+        public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+            return nbt;
         }
     }
 
@@ -118,7 +120,8 @@ public class ModDataSyncManager {
         public int type;
         public WorldSavedData data;
 
-        public WorldSavedDataSyncMessage() {}
+        public WorldSavedDataSyncMessage() {
+        }
 
         public WorldSavedDataSyncMessage(int type, WorldSavedData data) {
             this.type = type;

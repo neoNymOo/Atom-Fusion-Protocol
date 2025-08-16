@@ -51,10 +51,12 @@ public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
 
     public static class KeyBindingPressedMessage implements IMessage {
         @Override
-        public void toBytes(ByteBuf buf) {}
+        public void toBytes(ByteBuf buf) {
+        }
 
         @Override
-        public void fromBytes(ByteBuf buf) {}
+        public void fromBytes(ByteBuf buf) {
+        }
     }
 
     public static class KeyBindingPressedMessageHandler implements IMessageHandler<KeyBindingPressedMessage, IMessage> {
@@ -63,7 +65,7 @@ public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
             EntityPlayerMP player = context.getServerHandler().player;
             player.getServerWorld().addScheduledTask(() -> {
                 if (player != null && !player.world.isRemote) {
-                    UtilEntityExoskeleton.tryExitExoskeleton(player.world, player);
+                    UtilEntityExoskeleton.tryExitExoskeleton(player.world, player, false);
                 }
             });
             return null;

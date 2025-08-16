@@ -10,13 +10,17 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 @ModElementRegistry.ModElement.Tag
 public class ArmorX03 extends AbstractPowerArmor {
-    @GameRegistry.ObjectHolder("afp:x03_helmet") public static Item helmet;
-    @GameRegistry.ObjectHolder("afp:x03_chestplate") public static Item body;
-    @GameRegistry.ObjectHolder("afp:x03_leggings") public static Item legs;
-    @GameRegistry.ObjectHolder("afp:x03_boots") public static Item boots;
+    @GameRegistry.ObjectHolder("afp:x03_helmet")
+    public static Item helmet;
+    @GameRegistry.ObjectHolder("afp:x03_chestplate")
+    public static Item chestplate;
+    @GameRegistry.ObjectHolder("afp:x03_leggings")
+    public static Item leggings;
+    @GameRegistry.ObjectHolder("afp:x03_boots")
+    public static Item boots;
 
     public ArmorX03(ModElementRegistry instance) {
-        super(instance, 1, "x03", true);
+        super(instance, 2, "x03", true);
     }
 
     @Override
@@ -27,7 +31,7 @@ public class ArmorX03 extends AbstractPowerArmor {
                 69,
                 new int[]{20, 24, 30, 19},
                 0,
-                (SoundEvent) SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
+                SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
                 4f
         );
     }

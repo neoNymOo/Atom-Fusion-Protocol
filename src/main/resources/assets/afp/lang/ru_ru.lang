@@ -34,6 +34,8 @@ item.exo_leggings.name=Поножи экзоскелета
 item.exo_boots.name=Ботинки экзоскелета
 
 item.exoskeleton.name=Экзоскелет
+item.fusion_core.name=Ядерный блок
+
 itemGroup.tabpowerarmor=Силовая броня
 itemGroup.tabequipment=Оборудование
 

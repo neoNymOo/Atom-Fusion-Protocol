@@ -3,6 +3,7 @@ package com.nymoo.afp.common.item;
 import com.nymoo.afp.ModElementRegistry;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
 import com.nymoo.afp.common.tab.TabPowerArmor;
+import com.nymoo.afp.common.util.UtilPowerArmor;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.Entity;
@@ -12,13 +13,15 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.*;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import com.nymoo.afp.common.util.UtilPowerArmor;
+
 public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
     protected final String armorName;
     protected final boolean hasJetpack;
@@ -27,10 +30,6 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
     protected Item bodyItem;
     protected Item legsItem;
     protected Item bootsItem;
-
-    public boolean isExoArmor() {
-        return false;
-    }
 
     @SideOnly(Side.CLIENT)
     private PowerArmorModel helmetModel;
@@ -47,6 +46,14 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
         super(instance, sortid);
         this.armorName = armorName;
         this.hasJetpack = hasJetpack;
+    }
+
+    public String getArmorName() {
+        return armorName;
+    }
+
+    public boolean hasJetpack() {
+        return hasJetpack;
     }
 
     protected abstract ItemArmor.ArmorMaterial getArmorMaterial();
@@ -110,7 +117,7 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
     }
 
     private class PowerArmorItem extends ItemArmor implements IPowerArmor {
-        private final int partType;
+        public final int partType;
 
         public PowerArmorItem(ArmorMaterial material, EntityEquipmentSlot slot, int partType) {
             super(material, 0, slot);
@@ -162,10 +169,6 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
         @Override
         public void onArmorTick(World world, EntityPlayer player, ItemStack itemStack) {
             UtilPowerArmor.handleStepSound(world, player);
-
-            if (!isExoArmor()){
-                player.setInvisible(true);
-            }
         }
     }
 }

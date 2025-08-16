@@ -1,7 +1,9 @@
 package com.nymoo.afp.common.mixin.impl;
 
 import com.nymoo.afp.common.item.IPowerArmor;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -14,17 +16,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Slot.class)
 public abstract class MixinSlot {
 
-    @Shadow public IInventory inventory;
-    @Shadow public int slotIndex;
-    @Shadow public abstract ItemStack getStack();
+    @Shadow
+    public IInventory inventory;
+
+    @Shadow
+    public abstract ItemStack getStack();
 
     @Inject(method = "canTakeStack", at = @At("HEAD"), cancellable = true)
     private void onCanTakeStack(CallbackInfoReturnable<Boolean> cir) {
         if (!(this.inventory instanceof InventoryPlayer)) return;
-        if (this.slotIndex < 36 || this.slotIndex > 39) return;
+        InventoryPlayer inv = (InventoryPlayer) this.inventory;
+        EntityPlayer player = inv.player;
 
-        if (!this.getStack().isEmpty() && this.getStack().getItem() instanceof IPowerArmor) {
-            cir.setReturnValue(false);
+        ItemStack stack = this.getStack();
+        if (!stack.isEmpty() && stack.getItem() instanceof IPowerArmor) {
+            for (EntityEquipmentSlot equipSlot : new EntityEquipmentSlot[]{
+                    EntityEquipmentSlot.HEAD,
+                    EntityEquipmentSlot.CHEST,
+                    EntityEquipmentSlot.LEGS,
+                    EntityEquipmentSlot.FEET}) {
+                if (player.getItemStackFromSlot(equipSlot) == stack) {
+                    cir.setReturnValue(false);
+                    return;
+                }
+            }
         }
     }
 }

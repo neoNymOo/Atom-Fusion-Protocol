@@ -10,13 +10,17 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 
 @ModElementRegistry.ModElement.Tag
 public class ArmorExo extends AbstractPowerArmor {
-    @GameRegistry.ObjectHolder("afp:exo_helmet") public static Item helmet;
-    @GameRegistry.ObjectHolder("afp:exo_chestplate") public static Item body;
-    @GameRegistry.ObjectHolder("afp:exo_leggings") public static Item legs;
-    @GameRegistry.ObjectHolder("afp:exo_boots") public static Item boots;
+    @GameRegistry.ObjectHolder("afp:exo_helmet")
+    public static Item helmet;
+    @GameRegistry.ObjectHolder("afp:exo_chestplate")
+    public static Item chestplate;
+    @GameRegistry.ObjectHolder("afp:exo_leggings")
+    public static Item leggings;
+    @GameRegistry.ObjectHolder("afp:exo_boots")
+    public static Item boots;
 
     public ArmorExo(ModElementRegistry instance) {
-        super(instance, 7, "exo", false);
+        super(instance, 8, "exo", false);
     }
 
     @Override
@@ -27,13 +31,8 @@ public class ArmorExo extends AbstractPowerArmor {
                 34,
                 new int[]{2, 5, 6, 2},
                 0,
-                (SoundEvent) SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
+                SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
                 0f
         );
-    }
-
-    @Override
-    public boolean isExoArmor() {
-        return true;
     }
 }

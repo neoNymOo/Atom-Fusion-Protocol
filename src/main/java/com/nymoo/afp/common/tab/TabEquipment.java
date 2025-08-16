@@ -1,7 +1,7 @@
 package com.nymoo.afp.common.tab;
 
 import com.nymoo.afp.ModElementRegistry;
-import com.nymoo.afp.common.item.ArmorT45;
+import com.nymoo.afp.common.item.ItemFusionCore;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
@@ -21,7 +21,7 @@ public class TabEquipment extends ModElementRegistry.ModElement {
             @SideOnly(Side.CLIENT)
             @Override
             public ItemStack createIcon() {
-                return new ItemStack(ArmorT45.helmet);
+                return new ItemStack(ItemFusionCore.itemFusionCore);
             }
         };
     }

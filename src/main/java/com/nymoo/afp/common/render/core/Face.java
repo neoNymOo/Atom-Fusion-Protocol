@@ -16,8 +16,7 @@ public class Face {
 
     @SideOnly(Side.CLIENT)
     public void addFaceForRender(Tessellator tessellator, float textureOffset) {
-        if (faceNormal == null)
-        {
+        if (faceNormal == null) {
             faceNormal = this.calculateFaceNormal();
         }
 
@@ -26,10 +25,8 @@ public class Face {
         float averageU = 0F;
         float averageV = 0F;
 
-        if ((textureCoordinates != null) && (textureCoordinates.length > 0))
-        {
-            for (int i = 0; i < textureCoordinates.length; ++i)
-            {
+        if ((textureCoordinates != null) && (textureCoordinates.length > 0)) {
+            for (int i = 0; i < textureCoordinates.length; ++i) {
                 averageU += textureCoordinates[i].u;
                 averageV += textureCoordinates[i].v;
             }
@@ -40,36 +37,29 @@ public class Face {
 
         float offsetU, offsetV;
 
-        for (int i = 0; i < vertices.length; ++i)
-        {
-        	tessellator.setNormal(vertexNormals[i].x, vertexNormals[i].y, vertexNormals[i].z);
-            if ((textureCoordinates != null) && (textureCoordinates.length > 0))
-            {
+        for (int i = 0; i < vertices.length; ++i) {
+            tessellator.setNormal(vertexNormals[i].x, vertexNormals[i].y, vertexNormals[i].z);
+            if ((textureCoordinates != null) && (textureCoordinates.length > 0)) {
                 offsetU = textureOffset;
                 offsetV = textureOffset;
 
-                if (textureCoordinates[i].u > averageU)
-                {
+                if (textureCoordinates[i].u > averageU) {
                     offsetU = -offsetU;
                 }
-                if (textureCoordinates[i].v > averageV)
-                {
+                if (textureCoordinates[i].v > averageV) {
                     offsetV = -offsetV;
                 }
 
                 tessellator.addVertexWithUV(vertices[i].x, vertices[i].y, vertices[i].z, textureCoordinates[i].u + offsetU, textureCoordinates[i].v + offsetV);
-            }
-            else
-            {
+            } else {
                 tessellator.addVertexWithUV(vertices[i].x, vertices[i].y, vertices[i].z, 0, 0);
             }
         }
     }
 
-        @SideOnly(Side.CLIENT)
+    @SideOnly(Side.CLIENT)
     public void addFaceForRenderSplit(Tessellator tessellator, float textureOffset, float splitHeight, float scale) {
-        if (faceNormal == null)
-        {
+        if (faceNormal == null) {
             faceNormal = this.calculateFaceNormal();
         }
 
@@ -78,10 +68,8 @@ public class Face {
         float averageU = 0F;
         float averageV = 0F;
 
-        if ((textureCoordinates != null) && (textureCoordinates.length > 0))
-        {
-            for (int i = 0; i < textureCoordinates.length; ++i)
-            {
+        if ((textureCoordinates != null) && (textureCoordinates.length > 0)) {
+            for (int i = 0; i < textureCoordinates.length; ++i) {
                 averageU += textureCoordinates[i].u;
                 averageV += textureCoordinates[i].v;
             }
@@ -92,34 +80,28 @@ public class Face {
 
         float offsetU, offsetV;
 
-        for (int i = 0; i < vertices.length; ++i)
-        {
+        for (int i = 0; i < vertices.length; ++i) {
             tessellator.setNormal(vertexNormals[i].x, vertexNormals[i].y, vertexNormals[i].z);
-            if ((textureCoordinates != null) && (textureCoordinates.length > 0))
-            {
+            if ((textureCoordinates != null) && (textureCoordinates.length > 0)) {
                 offsetU = textureOffset;
                 offsetV = textureOffset;
 
-                if (textureCoordinates[i].u > averageU)
-                {
+                if (textureCoordinates[i].u > averageU) {
                     offsetU = -offsetU;
                 }
-                if (textureCoordinates[i].v > averageV)
-                {
+                if (textureCoordinates[i].v > averageV) {
                     offsetV = -offsetV;
                 }
 
-                if(vertices[i].y < splitHeight)
+                if (vertices[i].y < splitHeight)
                     tessellator.addVertexWithUV(vertices[i].x, vertices[i].y, vertices[i].z, textureCoordinates[i].u + offsetU, textureCoordinates[i].v + offsetV);
                 else
-                   tessellator.addVertexWithUV(vertices[i].x, vertices[i].y + scale, vertices[i].z, textureCoordinates[i].u + offsetU, textureCoordinates[i].v + offsetV);
-            }
-            else
-            {
-                if(vertices[i].y < splitHeight)
+                    tessellator.addVertexWithUV(vertices[i].x, vertices[i].y + scale, vertices[i].z, textureCoordinates[i].u + offsetU, textureCoordinates[i].v + offsetV);
+            } else {
+                if (vertices[i].y < splitHeight)
                     tessellator.addVertexWithUV(vertices[i].x, vertices[i].y, vertices[i].z, 0, 0);
                 else
-                   tessellator.addVertexWithUV(vertices[i].x, vertices[i].y + scale, vertices[i].z, 0, 0); 
+                    tessellator.addVertexWithUV(vertices[i].x, vertices[i].y + scale, vertices[i].z, 0, 0);
             }
         }
     }

@@ -98,19 +98,19 @@ public class AbstractArmorModel extends ModelBiped {
         this.rightFoot.rotateAngleY = this.bipedRightLeg.rotateAngleY;
         this.rightFoot.rotateAngleZ = this.bipedRightLeg.rotateAngleZ;
 
-        if(entity instanceof EntityZombie) {
+        if (entity instanceof EntityZombie) {
             boolean armsRaised = false;
-            if(entity instanceof EntityZombie)
-                armsRaised = ((EntityZombie)entity).isArmsRaised();
+            if (entity instanceof EntityZombie)
+                armsRaised = ((EntityZombie) entity).isArmsRaised();
 
-            this.leftArm.rotateAngleY = (float)(8 * Math.PI / 180D);
-            this.rightArm.rotateAngleY = -(float)(8 * Math.PI / 180D);
-            if(armsRaised){
-                this.leftArm.rotateAngleX = -(float)(120 * Math.PI / 180D);
-                this.rightArm.rotateAngleX = -(float)(120 * Math.PI / 180D);
+            this.leftArm.rotateAngleY = (float) (8 * Math.PI / 180D);
+            this.rightArm.rotateAngleY = -(float) (8 * Math.PI / 180D);
+            if (armsRaised) {
+                this.leftArm.rotateAngleX = -(float) (120 * Math.PI / 180D);
+                this.rightArm.rotateAngleX = -(float) (120 * Math.PI / 180D);
             } else {
-                this.leftArm.rotateAngleX = -(float)(80 * Math.PI / 180D);
-                this.rightArm.rotateAngleX = -(float)(80 * Math.PI / 180D);
+                this.leftArm.rotateAngleX = -(float) (80 * Math.PI / 180D);
+                this.rightArm.rotateAngleX = -(float) (80 * Math.PI / 180D);
             }
         }
 

@@ -34,6 +34,8 @@ item.exo_leggings.name=Exoskeleton Leggings
 item.exo_boots.name=Exoskeleton Boots
 
 item.exoskeleton.name=Exoskeleton
+item.fusion_core.name=Fusion Core
+
 itemGroup.tabpowerarmor=Power Armor
 itemGroup.tabequipment=Equipment
 

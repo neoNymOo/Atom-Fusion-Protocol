@@ -1,6 +1,6 @@
 package com.nymoo.afp;
 
-import com.nymoo.afp.common.handler.HandlerLivingJumpEvent;
+import com.nymoo.afp.common.event.HandlerLivingJumpEvent;
 import com.nymoo.afp.proxy.IProxy;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -33,6 +33,11 @@ public class AtomFusionProtocol {
     public static IProxy proxy;
     @Mod.Instance(Tags.MOD_ID)
     public static AtomFusionProtocol instance;
+
+    static {
+        FluidRegistry.enableUniversalBucket();
+    }
+
     public ModElementRegistry elements = new ModElementRegistry();
 
     @Mod.EventHandler
@@ -99,8 +104,5 @@ public class AtomFusionProtocol {
     @SideOnly(Side.CLIENT)
     public void registerModels(ModelRegistryEvent event) {
         elements.getElements().forEach(element -> element.registerModels(event));
-    }
-    static {
-        FluidRegistry.enableUniversalBucket();
     }
 }

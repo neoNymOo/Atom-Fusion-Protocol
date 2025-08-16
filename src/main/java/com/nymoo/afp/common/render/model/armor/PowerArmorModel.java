@@ -26,20 +26,17 @@ public class PowerArmorModel extends AbstractArmorModel {
     }
 
     private void loadModels() {
-        String baseKey = armorType + "_" + type;
-        boolean isJetpack = hasJetpackVariant && type == 1;
+        String key = armorType + "_" + type + (hasJetpackVariant ? "_jet" : "");
 
-        if (!MODEL_CACHE.containsKey(baseKey)) {
+        if (hasJetpackVariant && !JET_MODEL_CACHE.containsKey(key)) {
+            String modelPath = "models/armor/" + armorType + "/" + armorType + "_j_armor.obj";
+            JET_MODEL_CACHE.put(key, AdvancedModelLoader.loadModel(new ResourceLocation("afp", modelPath)));
+        } else if (!MODEL_CACHE.containsKey(key)) {
             String modelPath = "models/armor/" + armorType + "/" + armorType + "_armor.obj";
-            MODEL_CACHE.put(baseKey, AdvancedModelLoader.loadModel(new ResourceLocation("afp", modelPath)));
+            MODEL_CACHE.put(key, AdvancedModelLoader.loadModel(new ResourceLocation("afp", modelPath)));
         }
 
-        if (isJetpack && !JET_MODEL_CACHE.containsKey(baseKey)) {
-            String jetModelPath = "models/armor/" + armorType + "/" + armorType + "_j_armor.obj";
-            JET_MODEL_CACHE.put(baseKey, AdvancedModelLoader.loadModel(new ResourceLocation("afp", jetModelPath)));
-        }
-
-        IModelCustom model = isJetpack ? JET_MODEL_CACHE.get(baseKey) : MODEL_CACHE.get(baseKey);
+        IModelCustom model = hasJetpackVariant ? JET_MODEL_CACHE.get(key) : MODEL_CACHE.get(key);
 
         head = new ModelRendererObj(model, "Head");
         body = new ModelRendererObj(model, "Body");
@@ -68,20 +65,20 @@ public class PowerArmorModel extends AbstractArmorModel {
 
         switch (type) {
             case 0:
-                head.render(scale);
+                head.render(scale * 1);
                 break;
             case 1:
-                body.render(scale);
-                leftArm.render(scale);
-                rightArm.render(scale);
+                body.render(scale * 1);
+                leftArm.render(scale * 1);
+                rightArm.render(scale * 1);
                 break;
             case 2:
-                leftLeg.render(scale);
-                rightLeg.render(scale);
+                leftLeg.render(scale * 1);
+                rightLeg.render(scale * 1);
                 break;
             case 3:
-                leftFoot.render(scale);
-                rightFoot.render(scale);
+                leftFoot.render(scale * 1);
+                rightFoot.render(scale * 1);
                 break;
         }
 

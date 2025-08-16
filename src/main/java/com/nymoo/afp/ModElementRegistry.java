@@ -34,15 +34,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
-    public final List<ModElement> elements = new ArrayList<>();
-    public final List<Supplier<Block>> blocks = new ArrayList<>();
-    public final List<Supplier<Item>> items = new ArrayList<>();
-    public final List<Supplier<Biome>> biomes = new ArrayList<>();
-    public final List<Supplier<EntityEntry>> entities = new ArrayList<>();
-    public final List<Supplier<Potion>> potions = new ArrayList<>();
-
     private static final Map<ResourceLocation, SoundEvent> SOUNDS = new HashMap<>();
-    private int messageID = 0;
 
     static {
         Arrays.asList("exo_click", "servo_step1", "servo_step2", "servo_step3", "fusion_core", "wrench", "switch_click", "poweron")
@@ -51,6 +43,14 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
                         new SoundEvent(new ResourceLocation(Tags.MOD_ID, name))
                 ));
     }
+
+    public final List<ModElement> elements = new ArrayList<>();
+    public final List<Supplier<Block>> blocks = new ArrayList<>();
+    public final List<Supplier<Item>> items = new ArrayList<>();
+    public final List<Supplier<Biome>> biomes = new ArrayList<>();
+    public final List<Supplier<EntityEntry>> entities = new ArrayList<>();
+    public final List<Supplier<Potion>> potions = new ArrayList<>();
+    private int messageID = 0;
 
     public static SoundEvent getSound(ResourceLocation location) {
         return SOUNDS.get(location);
@@ -153,6 +153,30 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         }
     }
 
+    public List<ModElement> getElements() {
+        return elements;
+    }
+
+    public List<Supplier<Block>> getBlocks() {
+        return blocks;
+    }
+
+    public List<Supplier<Item>> getItems() {
+        return items;
+    }
+
+    public List<Supplier<Biome>> getBiomes() {
+        return biomes;
+    }
+
+    public List<Supplier<EntityEntry>> getEntities() {
+        return entities;
+    }
+
+    public List<Supplier<Potion>> getPotions() {
+        return potions;
+    }
+
     public static class GuiHandler implements IGuiHandler {
         @Override
         public Object getServerGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
@@ -165,17 +189,7 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
         }
     }
 
-    public List<ModElement> getElements() { return elements; }
-    public List<Supplier<Block>> getBlocks() { return blocks; }
-    public List<Supplier<Item>> getItems() { return items; }
-    public List<Supplier<Biome>> getBiomes() { return biomes; }
-    public List<Supplier<EntityEntry>> getEntities() { return entities; }
-    public List<Supplier<Potion>> getPotions() { return potions; }
-
     public static class ModElement implements Comparable<ModElement> {
-        @Retention(RetentionPolicy.RUNTIME)
-        public @interface Tag {}
-
         protected final ModElementRegistry elements;
         protected final int sortid;
 
@@ -184,17 +198,35 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
             this.sortid = sortid;
         }
 
-        public void initElements() {}
-        public void init(FMLInitializationEvent event) {}
-        public void preInit(FMLPreInitializationEvent event) {}
-        public void generateWorld(Random random, int posX, int posZ, World world, int dimID, IChunkGenerator cg, IChunkProvider cp) {}
-        public void serverLoad(FMLServerStartingEvent event) {}
-        public void registerModels(ModelRegistryEvent event) {}
-        public int addFuel(ItemStack fuel) { return 0; }
+        public void initElements() {
+        }
+
+        public void init(FMLInitializationEvent event) {
+        }
+
+        public void preInit(FMLPreInitializationEvent event) {
+        }
+
+        public void generateWorld(Random random, int posX, int posZ, World world, int dimID, IChunkGenerator cg, IChunkProvider cp) {
+        }
+
+        public void serverLoad(FMLServerStartingEvent event) {
+        }
+
+        public void registerModels(ModelRegistryEvent event) {
+        }
+
+        public int addFuel(ItemStack fuel) {
+            return 0;
+        }
 
         @Override
         public int compareTo(ModElement other) {
             return Integer.compare(this.sortid, other.sortid);
+        }
+
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface Tag {
         }
     }
 }

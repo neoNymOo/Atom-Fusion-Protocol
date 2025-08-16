@@ -1,6 +1,7 @@
 package com.nymoo.afp.common.entity;
 
 import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.item.ArmorExo;
 import com.nymoo.afp.common.util.UtilEntityExoskeleton;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.model.ModelBiped;
@@ -67,26 +68,24 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
     }
 
     public static class Exoskeleton extends EntityCreature {
-        private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-        private static final float[] SLOT_HEIGHT_THRESHOLDS = {1.35F, 0.9F, 0.45F};
+        private static final float[] SLOT_HEIGHT_THRESHOLDS = {1.5F, 0.7F, 0.35F};
         private static final EntityEquipmentSlot[] SLOT_ORDER = {
                 EntityEquipmentSlot.HEAD,
                 EntityEquipmentSlot.CHEST,
                 EntityEquipmentSlot.LEGS,
                 EntityEquipmentSlot.FEET
         };
+        private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
         public Exoskeleton(World world) {
             super(world);
-            setSize(0.6f, 1.8f);
+            setSize(0.6f, 2.0f);
             setNoAI(true);
             enablePersistence();
-            for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
-                if (slot.getSlotType() == EntityEquipmentSlot.Type.ARMOR) {
-                    // Исправлено: использование публичного метода
-                    setItemStackToSlot(slot, UtilEntityExoskeleton.getBaseArmorForSlot(slot));
-                }
-            }
+            setItemStackToSlot(EntityEquipmentSlot.HEAD, new ItemStack(ArmorExo.helmet));
+            setItemStackToSlot(EntityEquipmentSlot.CHEST, new ItemStack(ArmorExo.chestplate));
+            setItemStackToSlot(EntityEquipmentSlot.LEGS, new ItemStack(ArmorExo.leggings));
+            setItemStackToSlot(EntityEquipmentSlot.FEET, new ItemStack(ArmorExo.boots));
         }
 
         @Override
@@ -147,7 +146,7 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
             RayTraceResult rayTrace = getEntityBoundingBox().calculateIntercept(eyesPos, endPos);
             if (rayTrace == null) return true;
 
-            float hitY = (float)(rayTrace.hitVec.y - posY);
+            float hitY = (float) (rayTrace.hitVec.y - posY);
             EntityEquipmentSlot clickedSlot = SLOT_ORDER[3];
             for (int i = 0; i < SLOT_HEIGHT_THRESHOLDS.length; i++) {
                 if (hitY > SLOT_HEIGHT_THRESHOLDS[i]) {
