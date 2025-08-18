@@ -201,6 +201,13 @@ public class UtilEntityExoskeleton {
             return;
         }
 
+        // Проверка, что на игроке нет брони
+        for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
+            if (!player.getItemStackFromSlot(slot).isEmpty()) {
+                return;
+            }
+        }
+
         // Копируем броню с экзоскелета на игрока
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
             player.setItemStackToSlot(slot, entity.getItemStackFromSlot(slot).copy());

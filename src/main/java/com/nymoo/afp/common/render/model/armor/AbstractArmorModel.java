@@ -10,14 +10,14 @@ public class AbstractArmorModel extends ModelBiped {
 
     int type;
 
-    ModelRendererObj head;
-    ModelRendererObj body;
-    ModelRendererObj leftArm;
-    ModelRendererObj rightArm;
-    ModelRendererObj leftLeg;
-    ModelRendererObj rightLeg;
-    ModelRendererObj leftFoot;
-    ModelRendererObj rightFoot;
+    public ModelRendererObj head;
+    public ModelRendererObj body;
+    public ModelRendererObj leftArm;
+    public ModelRendererObj rightArm;
+    public ModelRendererObj leftLeg;
+    public ModelRendererObj rightLeg;
+    public ModelRendererObj leftFoot;
+    public ModelRendererObj rightFoot;
 
     public AbstractArmorModel(int type) {
         this.type = type;

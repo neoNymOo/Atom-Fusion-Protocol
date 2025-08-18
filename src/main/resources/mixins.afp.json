@@ -9,6 +9,7 @@
     "MixinSlot",
     "MixinBlockDispenser",
     "MixinModelBiped",
-    "MixinEntityPlayer"
+    "MixinEntityPlayer",
+    "MixinRenderPlayer"
   ]
 }
