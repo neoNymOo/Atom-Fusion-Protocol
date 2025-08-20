@@ -10,6 +10,7 @@ import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
 
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.MOD_VERSION + "-" + Tags.MC_VERSION)
 public class AtomFusionProtocol {
+    public static final boolean IS_HBM_LOADED = Loader.isModLoaded("hbm");
     public static final SimpleNetworkWrapper PACKET_HANDLER = NetworkRegistry.INSTANCE.newSimpleChannel(Tags.MOD_ID);
     @SidedProxy(clientSide = "com.nymoo.afp.proxy.ClientProxy", serverSide = "com.nymoo.afp.proxy.ServerProxy")
     public static IProxy proxy;

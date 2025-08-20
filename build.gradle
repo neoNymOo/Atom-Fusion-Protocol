@@ -144,6 +144,8 @@ dependencies {
         testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
+    compileOnly files("libs/NTM-Extended-1.12.2-2.0.2.jar")
+    compileOnly files("libs/Baubles-1.12-1.5.2.jar")
 }
 
 apply from: 'gradle/scripts/dependencies.gradle'

@@ -35,12 +35,12 @@ public abstract class MixinRenderPlayer {
     }
 
     private void renderCustomArm(AbstractClientPlayer player, boolean isRightArm, CallbackInfo ci) {
-        ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        if (chestplate.isEmpty()) return;
-        Item item = chestplate.getItem();
+        ItemStack chestplateStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+        if (chestplateStack.isEmpty()) return;
+        Item item = chestplateStack.getItem();
         if (!(item instanceof IPowerArmor)) return;
 
-        ModelBiped armorModel = item.getArmorModel(player, chestplate, EntityEquipmentSlot.CHEST, null);
+        ModelBiped armorModel = item.getArmorModel(player, chestplateStack, EntityEquipmentSlot.CHEST, null);
         if (!(armorModel instanceof PowerArmorModel)) return;
         PowerArmorModel model = (PowerArmorModel) armorModel;
 

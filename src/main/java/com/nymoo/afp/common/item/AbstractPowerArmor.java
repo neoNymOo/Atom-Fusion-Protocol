@@ -1,5 +1,7 @@
 package com.nymoo.afp.common.item;
 
+import com.hbm.items.tool.ItemGeigerCounter;
+import com.nymoo.afp.AtomFusionProtocol;
 import com.nymoo.afp.ModElementRegistry;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
 import com.nymoo.afp.common.tab.TabPowerArmor;
@@ -19,6 +21,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -169,6 +172,9 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
         @Override
         public void onArmorTick(World world, EntityPlayer player, ItemStack itemStack) {
             UtilPowerArmor.handleStepSound(world, player);
+            if (AtomFusionProtocol.IS_HBM_LOADED) {
+                ItemGeigerCounter.playGeiger(world, player);
+            }
         }
     }
 }
