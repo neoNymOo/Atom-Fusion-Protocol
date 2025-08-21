@@ -1,4 +1,4 @@
-package com.nymoo.afp.common.event;
+package com.nymoo.afp.common.handler;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;

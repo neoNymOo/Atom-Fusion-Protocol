@@ -1,6 +1,6 @@
 package com.nymoo.afp;
 
-import com.nymoo.afp.common.event.HandlerLivingJumpEvent;
+import com.nymoo.afp.common.handler.HandlerLivingJumpEvent;
 import com.nymoo.afp.proxy.IProxy;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
