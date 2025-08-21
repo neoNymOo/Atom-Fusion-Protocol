@@ -15,9 +15,9 @@ public class HandlerLivingJumpEvent {
     public void onLivingJump(LivingEvent.LivingJumpEvent event) {
         if (event.getEntity() instanceof EntityLivingBase) {
             EntityLivingBase entity = (EntityLivingBase) event.getEntity();
-            ItemStack chestplate = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+            ItemStack chestplateStack = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
 
-            if (!chestplate.isEmpty() && chestplate.getItem() instanceof IPowerArmor) {
+            if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
                 UtilPowerArmor.playServoStepSound(entity.world, entity.posX, entity.posY, entity.posZ);
             }
         }

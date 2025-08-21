@@ -9,14 +9,17 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import static com.nymoo.afp.common.util.UtilEntityExoskeleton.tryExitExoskeleton;
 
 @Mod.EventBusSubscriber
-public class HandlerPlayerDeath {
+public class HandlerLivingDeathEvent {
     @SubscribeEvent
-    public static void onPlayerDeath(LivingDeathEvent event) {
+    public static void onLivingDeathEvent(LivingDeathEvent event) {
         if (event.getEntityLiving() instanceof EntityPlayer) {
             EntityPlayer player = (EntityPlayer) event.getEntityLiving();
             World world = player.getEntityWorld();
 
-            tryExitExoskeleton(world, player, true);
+            boolean keepInventory = world.getGameRules().getBoolean("keepInventory");
+            if (!keepInventory) {
+                tryExitExoskeleton(world, player, true);
+            }
         }
     }
 }
