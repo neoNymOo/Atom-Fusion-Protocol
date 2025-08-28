@@ -1,6 +1,7 @@
 package com.nymoo.afp.common.item;
 
 import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.config.AFPConfig;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.util.ResourceLocation;
@@ -25,14 +26,16 @@ public class ArmorExo extends AbstractPowerArmor {
 
     @Override
     protected ItemArmor.ArmorMaterial getArmorMaterial() {
+        AFPConfig.ArmorSet config = AFPConfig.getArmorSet("Exo");
+
         return EnumHelper.addArmorMaterial(
                 "exo",
                 "minecraft:diamond",
-                34,
-                new int[]{2, 5, 6, 2},
-                0,
+                config.durability,
+                new int[]{config.bootsProtection, config.leggingsProtection, config.chestplateProtection, config.helmetProtection},
+                config.enchantability,
                 SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
-                0f
+                config.toughness
         );
     }
 }

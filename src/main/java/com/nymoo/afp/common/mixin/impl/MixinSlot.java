@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.mixin.impl;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.item.IPowerArmor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -24,6 +25,8 @@ public abstract class MixinSlot {
 
     @Inject(method = "canTakeStack", at = @At("HEAD"), cancellable = true)
     private void onCanTakeStack(CallbackInfoReturnable<Boolean> cir) {
+        if (AFPConfig.canPlayerUnequipPowerArmor) return;
+
         if (!(this.inventory instanceof InventoryPlayer)) return;
         InventoryPlayer inv = (InventoryPlayer) this.inventory;
         EntityPlayer player = inv.player;

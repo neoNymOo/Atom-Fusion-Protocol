@@ -1,6 +1,7 @@
 package com.nymoo.afp.common.entity;
 
 import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.item.ArmorExo;
 import com.nymoo.afp.common.util.UtilEntityExoskeleton;
 import net.minecraft.block.state.IBlockState;
@@ -79,7 +80,7 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
 
         public Exoskeleton(World world) {
             super(world);
-            setSize(0.6f, 2.0f);
+            setSize(AFPConfig.exoskeletonHitboxWidth, AFPConfig.exoskeletonHitboxHeight);
             setNoAI(true);
             enablePersistence();
             setItemStackToSlot(EntityEquipmentSlot.HEAD, new ItemStack(ArmorExo.helmet));

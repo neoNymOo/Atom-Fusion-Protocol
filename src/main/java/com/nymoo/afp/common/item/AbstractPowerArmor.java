@@ -3,6 +3,7 @@ package com.nymoo.afp.common.item;
 import com.hbm.items.tool.ItemGeigerCounter;
 import com.nymoo.afp.AtomFusionProtocol;
 import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
 import com.nymoo.afp.common.tab.TabPowerArmor;
 import com.nymoo.afp.common.util.UtilPowerArmor;
@@ -161,6 +162,7 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
 
         @Override
         public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot slot, Entity entity) {
+            if (AFPConfig.canPlayerEquipPowerArmor) return true;
             return false;
         }
 
@@ -175,6 +177,11 @@ public abstract class AbstractPowerArmor extends ModElementRegistry.ModElement {
             if (AtomFusionProtocol.IS_HBM_LOADED) {
                 ItemGeigerCounter.playGeiger(world, player);
             }
+        }
+
+        @Override
+        public String getArmorType() {
+            return armorName;
         }
     }
 }

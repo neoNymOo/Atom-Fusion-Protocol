@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.util;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -43,6 +44,8 @@ public class UtilPowerArmor {
      * @param player Игрок в силовой броне
      */
     public static void handleStepSound(World world, EntityPlayer player) {
+        if (!AFPConfig.playServoStepSound) return;
+
         if (world.isRemote || !player.onGround) return; // Только на серверной стороне и на земле
 
         try {
@@ -80,6 +83,6 @@ public class UtilPowerArmor {
 
     public static void playServoStepSound(World world, double x, double y, double z) {
         int soundIndex = (int) (Math.random() * SERVO_SOUNDS.length);
-        world.playSound(null, x, y, z, SERVO_SOUNDS[soundIndex], SoundCategory.PLAYERS, 0.55f, 1.0f);
+        world.playSound(null, x, y, z, SERVO_SOUNDS[soundIndex], SoundCategory.PLAYERS, AFPConfig.servoVolume, 1.0f);
     }
 }

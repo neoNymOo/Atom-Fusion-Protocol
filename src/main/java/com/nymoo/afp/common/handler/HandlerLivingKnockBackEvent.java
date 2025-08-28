@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.handler;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.item.IPowerArmor;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -18,7 +19,7 @@ public class HandlerLivingKnockBackEvent {
             ItemStack chestplateStack = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
 
             if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
-                event.setStrength(0.0F);
+                event.setStrength(event.getStrength() * AFPConfig.powerArmorKnockbackMultiplier);
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.nymoo.afp;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.handler.HandlerLivingJumpEvent;
 import com.nymoo.afp.proxy.IProxy;
 import net.minecraft.block.Block;
@@ -8,6 +9,7 @@ import net.minecraft.potion.Potion;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fml.common.Loader;
@@ -25,6 +27,7 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import java.io.File;
 import java.util.function.Supplier;
 
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.MOD_VERSION + "-" + Tags.MC_VERSION)
@@ -44,6 +47,18 @@ public class AtomFusionProtocol {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        File configFile = event.getSuggestedConfigurationFile();
+        Configuration config = new Configuration(configFile);
+        try {
+            config.load();
+            AFPConfig.loadFromConfig(config);
+        } catch (Exception e) {
+            System.err.println("Error loading the config " + Tags.MOD_ID + ": " + e.getMessage());
+        } finally {
+            if (config.hasChanged()) {
+                config.save();
+            }
+        }
         MinecraftForge.EVENT_BUS.register(this);
         GameRegistry.registerWorldGenerator(elements, 5);
         GameRegistry.registerFuelHandler(elements);

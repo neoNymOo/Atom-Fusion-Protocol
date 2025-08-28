@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.mixin.impl;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.item.IPowerArmor;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -18,7 +19,7 @@ public abstract class MixinEntityPlayer {
 
         if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
             float originalSpeed = cir.getReturnValue();
-            float modifiedSpeed = (float) (originalSpeed * 0.85);
+            float modifiedSpeed = originalSpeed * AFPConfig.powerArmorSpeedMultiplier;
             cir.setReturnValue(modifiedSpeed);
         }
     }

@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.mixin.impl;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.entity.EntityExoskeleton.Exoskeleton;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.entity.Entity;
@@ -12,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinModelBiped {
     @Inject(method = "setRotationAngles", at = @At("RETURN"))
     private void onSetRotationAngles(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, Entity entityIn, CallbackInfo ci) {
+        if (AFPConfig.canExoskeletonSwingArms) return;
+
         if (entityIn instanceof Exoskeleton) {
             ModelBiped self = (ModelBiped) (Object) this;
 

@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.handler;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -12,6 +13,8 @@ import static com.nymoo.afp.common.util.UtilEntityExoskeleton.tryExitExoskeleton
 public class HandlerLivingDeathEvent {
     @SubscribeEvent
     public static void onLivingDeathEvent(LivingDeathEvent event) {
+        if (!AFPConfig.handlePlayerDeath) return;
+
         if (event.getEntityLiving() instanceof EntityPlayer) {
             EntityPlayer player = (EntityPlayer) event.getEntityLiving();
             World world = player.getEntityWorld();

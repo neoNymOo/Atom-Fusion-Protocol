@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.handler;
 
+import com.nymoo.afp.common.item.AbstractPowerArmor;
 import com.nymoo.afp.common.item.IPowerArmor;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
 import net.minecraft.client.Minecraft;
@@ -25,13 +26,13 @@ import java.util.Map;
 public class HandlerRenderSpecificHandEvent {
     private static final Map<Item, ResourceLocation> textureCache = new HashMap<>();
     @SubscribeEvent
-    public static void onRenderSpecificHandEvent(RenderSpecificHandEvent e) {
+    public static void onRenderSpecificHandEvent(RenderSpecificHandEvent event) {
         EntityPlayer player = Minecraft.getMinecraft().player;
         if (player == null) return;
 
-        if (e.getHand() != EnumHand.MAIN_HAND) return;
+        if (event.getHand() != EnumHand.MAIN_HAND) return;
 
-        ItemStack heldStack = e.getItemStack();
+        ItemStack heldStack = event.getItemStack();
         if (!heldStack.isEmpty()) return;
 
         ItemStack chestplateStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
@@ -40,8 +41,8 @@ public class HandlerRenderSpecificHandEvent {
         EnumHandSide primaryHand = player.getPrimaryHand();
         boolean isRightArm = primaryHand == EnumHandSide.RIGHT;
 
-        float swingProgress = e.getSwingProgress();
-        float equipProgress = e.getEquipProgress();
+        float swingProgress = event.getSwingProgress();
+        float equipProgress = event.getEquipProgress();
 
         float f = isRightArm ? 1.0F : -1.0F;
         float f1 = MathHelper.sqrt(swingProgress);
@@ -97,6 +98,6 @@ public class HandlerRenderSpecificHandEvent {
         GlStateManager.shadeModel(GL11.GL_FLAT);
         GlStateManager.enableCull();
 
-        e.setCanceled(true);
+        event.setCanceled(true);
     }
 }

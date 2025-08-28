@@ -7,4 +7,5 @@ import net.minecraft.item.ItemStack;
 
 public interface IPowerArmor {
     ModelBiped getArmorModel(EntityLivingBase entity, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel);
+    String getArmorType();
 }

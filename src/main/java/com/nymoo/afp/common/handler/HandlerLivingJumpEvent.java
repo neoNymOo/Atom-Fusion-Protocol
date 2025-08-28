@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.handler;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.item.IPowerArmor;
 import com.nymoo.afp.common.util.UtilPowerArmor;
 import net.minecraft.entity.EntityLivingBase;
@@ -13,6 +14,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class HandlerLivingJumpEvent {
     @SubscribeEvent
     public void onLivingJump(LivingEvent.LivingJumpEvent event) {
+        if (!AFPConfig.playServoJumpSound) return;
+
         if (event.getEntity() instanceof EntityLivingBase) {
             EntityLivingBase entity = (EntityLivingBase) event.getEntity();
             ItemStack chestplateStack = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);

@@ -1,6 +1,7 @@
 package com.nymoo.afp.common.item;
 
 import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.common.config.AFPConfig;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.util.ResourceLocation;
@@ -25,14 +26,16 @@ public class ArmorT45 extends AbstractPowerArmor {
 
     @Override
     protected ItemArmor.ArmorMaterial getArmorMaterial() {
+        AFPConfig.ArmorSet config = AFPConfig.getArmorSet("T-45");
+
         return EnumHelper.addArmorMaterial(
                 "t45",
                 "minecraft:diamond",
-                69,
-                new int[]{12, 17, 19, 14},
-                0,
+                config.durability,
+                new int[]{config.bootsProtection, config.leggingsProtection, config.chestplateProtection, config.helmetProtection},
+                config.enchantability,
                 SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
-                4f
+                config.toughness
         );
     }
 }
