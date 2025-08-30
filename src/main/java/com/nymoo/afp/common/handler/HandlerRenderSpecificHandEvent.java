@@ -24,6 +24,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber
 public class HandlerRenderSpecificHandEvent {
     private static final Map<Item, ResourceLocation> textureCache = new HashMap<>();
+
     @SubscribeEvent
     public static void onRenderSpecificHandEvent(RenderSpecificHandEvent event) {
         EntityPlayer player = Minecraft.getMinecraft().player;

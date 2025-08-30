@@ -8,18 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AFPConfig {
-    public static class ArmorSet {
-        public int helmetProtection;
-        public int chestplateProtection;
-        public int leggingsProtection;
-        public int bootsProtection;
-        public int durability;
-        public int enchantability;
-        public float toughness;
-    }
-
     private static final Map<String, ArmorSet> armorSets = new HashMap<>();
-
     public static boolean playServoJumpSound = true;
     public static boolean playServoStepSound = true;
     public static boolean handlePlayerDeath = true;
@@ -32,6 +21,7 @@ public class AFPConfig {
     public static float powerArmorSpeedMultiplier = 0.85F;
     public static float servoVolume = 0.55F;
     public static float powerArmorKnockbackMultiplier = 0.0F;
+    public static float powerArmorFallDamageMultiplier = 0.2F;
 
     public static ArmorSet getArmorSet(String name) {
         return armorSets.get(name.toLowerCase());
@@ -56,7 +46,8 @@ public class AFPConfig {
                 "exoskeleton_hitbox_width",
                 "exoskeleton_hitbox_height",
                 "power_armor_speed_multiplier",
-                "power_armor_knockback_multiplier"
+                "power_armor_knockback_multiplier",
+                "power_armor_fall_damage_multiplier"
         ));
 
         config.setCategoryComment(CATEGORY_POWER_ARMOR, "Property format: helmet_protection, chestplate_protection, leggings_protection, boots_protection, durability, enchantability, toughness");
@@ -117,6 +108,7 @@ public class AFPConfig {
         exoskeletonHitboxHeight = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_height", 2.0f, "Exoskeleton hitbox height. [default: 2.0]").getDouble();
         powerArmorSpeedMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_speed_multiplier", 0.85, "The player's speed multiplier when wearing power armor is multiplied by the player's current speed. [default: 0.85]").getDouble();
         powerArmorKnockbackMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_knockback_multiplier", 0.0f, "The discard force multiplier when hitting a player in power armor is multiplied by the current discard force. [default: 0.0]").getDouble();
+        powerArmorFallDamageMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_fall_damage_multiplier", 0.2f, "Multiplier for fall damage when wearing power armor. [default: 0.2]").getDouble();
     }
 
     private static ArmorSet parseArmorSet(String value) {
@@ -133,5 +125,15 @@ public class AFPConfig {
         set.enchantability = Integer.parseInt(parts[5].trim());
         set.toughness = Float.parseFloat(parts[6].trim());
         return set;
+    }
+
+    public static class ArmorSet {
+        public int helmetProtection;
+        public int chestplateProtection;
+        public int leggingsProtection;
+        public int bootsProtection;
+        public int durability;
+        public int enchantability;
+        public float toughness;
     }
 }

@@ -5,7 +5,6 @@ import com.nymoo.afp.AtomFusionProtocol;
 import com.nymoo.afp.ModElementRegistry;
 import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
-import com.nymoo.afp.common.tab.TabPowerArmor;
 import com.nymoo.afp.common.util.UtilPowerArmor;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;

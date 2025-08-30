@@ -8,8 +8,6 @@ import net.minecraft.entity.player.EntityPlayer;
 
 public class AbstractArmorModel extends ModelBiped {
 
-    int type;
-
     public ModelRendererObj head;
     public ModelRendererObj body;
     public ModelRendererObj leftArm;
@@ -18,6 +16,7 @@ public class AbstractArmorModel extends ModelBiped {
     public ModelRendererObj rightLeg;
     public ModelRendererObj leftFoot;
     public ModelRendererObj rightFoot;
+    int type;
 
     public AbstractArmorModel(int type) {
         this.type = type;
