@@ -1,6 +1,5 @@
 package com.nymoo.afp.common.handler;
 
-import com.nymoo.afp.common.item.AbstractPowerArmor;
 import com.nymoo.afp.common.item.IPowerArmor;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
 import net.minecraft.client.Minecraft;

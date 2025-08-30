@@ -81,12 +81,12 @@ public class UtilEntityExoskeleton {
         ItemStack slotStack = entity.getItemStackFromSlot(slot);
 
         // Слот не должен быть пустым и должен содержать базовую "exo"-броню
-        if (slotStack.isEmpty() || !"exo".equals(getArmorType(slotStack))) {
+        if (slotStack.isEmpty() || !"exo".equals(((IPowerArmor) slotStack.getItem()).getPowerArmorType())) {
             return;
         }
 
         // Проверяем совместимость новой брони с уже установленными частями
-        String newType = getArmorType(heldStack);
+        String newType = ((IPowerArmor) heldStack.getItem()).getPowerArmorType();
         if (!isArmorCompatible(entity, newType)) {
             return;
         }
@@ -134,13 +134,13 @@ public class UtilEntityExoskeleton {
         }
 
         // Если это базовая "exo"-броня, проверяем возможность входа (для CHEST, если все слоты "exo")
-        String armorType = getArmorType(slotStack);
+        String armorType = ((IPowerArmor) slotStack.getItem()).getPowerArmorType();
         if ("exo".equals(armorType)) {
             if (slot == EntityEquipmentSlot.CHEST) {
                 boolean allExo = true;
                 for (EntityEquipmentSlot armorSlot : ARMOR_SLOTS) {
                     ItemStack stack = entity.getItemStackFromSlot(armorSlot);
-                    if (stack.isEmpty() || !"exo".equals(getArmorType(stack))) {
+                    if (stack.isEmpty() || !"exo".equals(((IPowerArmor) stack.getItem()).getPowerArmorType())) {
                         allExo = false;
                         break;
                     }
@@ -280,7 +280,7 @@ public class UtilEntityExoskeleton {
             if (armorStack.isEmpty()) {
                 continue;
             }
-            String armorType = getArmorType(armorStack);
+            String armorType = ((IPowerArmor) armorStack.getItem()).getPowerArmorType();
             if ("exo".equals(armorType) || armorType.equals(newType)) {
                 continue;
             }
@@ -300,19 +300,6 @@ public class UtilEntityExoskeleton {
                 world.isBlockLoaded(upperPos) &&
                 !world.getBlockState(lowerPos).causesSuffocation() &&
                 !world.getBlockState(upperPos).causesSuffocation();
-    }
-
-    /**
-     * Получает тип брони из имени предмета (первая часть registry name до "_").
-     * Например: "exo_helmet" -> "exo". Если стек пустой, возвращает пустую строку.
-     */
-    public static String getArmorType(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return "";
-        }
-        String path = stack.getItem().getRegistryName().getPath();
-        int underscoreIndex = path.indexOf('_');
-        return underscoreIndex > 0 ? path.substring(0, underscoreIndex) : path;
     }
 
     /**

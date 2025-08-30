@@ -3,7 +3,6 @@ package com.nymoo.afp.common.handler;
 import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.item.IPowerArmor;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingKnockBackEvent;

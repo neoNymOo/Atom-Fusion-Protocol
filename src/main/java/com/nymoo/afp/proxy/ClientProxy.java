@@ -1,12 +1,12 @@
 package com.nymoo.afp.proxy;
 
-import com.nymoo.afp.AtomFusionProtocol;
-import com.nymoo.afp.common.item.AbstractPowerArmor;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ClientProxy implements IProxy {
     @Override
@@ -14,19 +14,20 @@ public class ClientProxy implements IProxy {
     }
 
     @Override
+    @SideOnly(Side.CLIENT)
     public void preInit(FMLPreInitializationEvent event) {
-        for (com.nymoo.afp.ModElementRegistry.ModElement element : AtomFusionProtocol.instance.elements.getElements()) {
-            if (element instanceof AbstractPowerArmor) {
-                AbstractPowerArmor apa = (AbstractPowerArmor) element;
-                String armorType = apa.getArmorName();
-                boolean hasJetpack = apa.hasJetpack();
+        String[] armorTypes = {"x03", "x02", "x01", "t60", "t51", "t45", "exo"};
+        for (String armorType : armorTypes) {
+            try {
                 new PowerArmorModel(0, armorType, false);
                 new PowerArmorModel(1, armorType, false);
-                if (hasJetpack) {
+                if (!armorType.equals("exo")) {
                     new PowerArmorModel(1, armorType, true);
                 }
                 new PowerArmorModel(2, armorType, false);
                 new PowerArmorModel(3, armorType, false);
+            } catch (Exception e) {
+                System.err.println("Failed to preload model for " + armorType + ": " + e.getMessage());
             }
         }
     }
