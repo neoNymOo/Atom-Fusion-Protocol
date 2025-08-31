@@ -60,7 +60,7 @@ public class ArmorExo extends ModElementRegistry.ModElement {
 
         ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial(
                 "exo",
-                "afp:exo",
+                "minecraft:diamond",
                 config.durability,
                 new int[]{config.bootsProtection, config.leggingsProtection, config.chestplateProtection, config.helmetProtection},
                 config.enchantability,

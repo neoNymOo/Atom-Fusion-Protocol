@@ -22,6 +22,7 @@ public class AFPConfig {
     public static float servoVolume = 0.55F;
     public static float powerArmorKnockbackMultiplier = 0.0F;
     public static float powerArmorFallDamageMultiplier = 0.2F;
+    public static float powerArmorFallThreshold = 22.0F;
 
     public static ArmorSet getArmorSet(String name) {
         return armorSets.get(name.toLowerCase());
@@ -47,7 +48,8 @@ public class AFPConfig {
                 "exoskeleton_hitbox_height",
                 "power_armor_speed_multiplier",
                 "power_armor_knockback_multiplier",
-                "power_armor_fall_damage_multiplier"
+                "power_armor_fall_damage_multiplier",
+                "power_armor_fall_threshold"
         ));
 
         config.setCategoryComment(CATEGORY_POWER_ARMOR, "Property format: helmet_protection, chestplate_protection, leggings_protection, boots_protection, durability, enchantability, toughness");
@@ -106,9 +108,10 @@ public class AFPConfig {
         canExoskeletonSwingArms = config.getBoolean("can_exoskeleton_swing_arms", CATEGORY_GENERAL, false, "Should the exoskeleton swing its arms?");
         exoskeletonHitboxWidth = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_width", 0.75f, "Exoskeleton hitbox width. [default: 0.75]").getDouble();
         exoskeletonHitboxHeight = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_height", 2.0f, "Exoskeleton hitbox height. [default: 2.0]").getDouble();
-        powerArmorSpeedMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_speed_multiplier", 0.85, "The player's speed multiplier when wearing power armor is multiplied by the player's current speed. [default: 0.85]").getDouble();
+        powerArmorSpeedMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_speed_multiplier", 0.85f, "The player's speed multiplier when wearing power armor is multiplied by the player's current speed. [default: 0.85]").getDouble();
         powerArmorKnockbackMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_knockback_multiplier", 0.0f, "The discard force multiplier when hitting a player in power armor is multiplied by the current discard force. [default: 0.0]").getDouble();
         powerArmorFallDamageMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_fall_damage_multiplier", 0.2f, "Multiplier for fall damage when wearing power armor. [default: 0.2]").getDouble();
+        powerArmorFallThreshold = (float) config.get(CATEGORY_GENERAL, "power_armor_fall_threshold", 22.0f, "The fall height threshold before the player starts taking fall damage. [default: 22.0]").getDouble();
     }
 
     private static ArmorSet parseArmorSet(String value) {

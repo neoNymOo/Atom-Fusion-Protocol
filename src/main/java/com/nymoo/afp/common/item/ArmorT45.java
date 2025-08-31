@@ -61,7 +61,7 @@ public class ArmorT45 extends ModElementRegistry.ModElement {
 
         ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial(
                 "t45",
-                "afp:t45",
+                "minecraft:diamond",
                 config.durability,
                 new int[]{config.bootsProtection, config.leggingsProtection, config.chestplateProtection, config.helmetProtection},
                 config.enchantability,

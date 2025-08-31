@@ -61,7 +61,7 @@ public class ArmorX03 extends ModElementRegistry.ModElement {
 
         ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial(
                 "x03",
-                "afp:x03",
+                "minecraft:diamond",
                 config.durability,
                 new int[]{config.bootsProtection, config.leggingsProtection, config.chestplateProtection, config.helmetProtection},
                 config.enchantability,
