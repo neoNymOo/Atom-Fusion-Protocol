@@ -11,8 +11,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -20,9 +18,13 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 
+/**
+ * Registers and handles the keybinding for exiting power armor.
+ * Sends network message to server when pressed (hold handled in HandlerClientTickEvent).
+ */
 @ModElementRegistry.ModElement.Tag
 public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
-    private KeyBinding keys;
+    public static KeyBinding keys;
 
     public KeybindingExitPowerArmor(ModElementRegistry instance) {
         super(instance, 1);
@@ -41,14 +43,9 @@ public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    @SubscribeEvent
-    @SideOnly(Side.CLIENT)
-    public void onKeyInput(InputEvent.KeyInputEvent event) {
-        if (Minecraft.getMinecraft().currentScreen == null && keys.isPressed()) {
-            AtomFusionProtocol.PACKET_HANDLER.sendToServer(new KeyBindingPressedMessage());
-        }
-    }
-
+    /**
+     * Network message for exit key press (completion handled via hold in tick event).
+     */
     public static class KeyBindingPressedMessage implements IMessage {
         @Override
         public void toBytes(ByteBuf buf) {
@@ -59,6 +56,10 @@ public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
         }
     }
 
+    /**
+     * Handler for exit key message on server.
+     * Calls tryExitExoskeleton in UtilEntityExoskeleton.
+     */
     public static class KeyBindingPressedMessageHandler implements IMessageHandler<KeyBindingPressedMessage, IMessage> {
         @Override
         public IMessage onMessage(KeyBindingPressedMessage message, MessageContext context) {

@@ -8,21 +8,19 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * Отрисовывает индикатор прогресса удержания для взаимодействия с экзоскелетом
- * Основные особенности:
- *  - Прогресс-бар из сегментов в центре экрана
- *  - Оптимизированное использование StringBuilder для минимизации аллокаций
- *  - Точное восстановление состояний рендера
+ * Handles rendering of the game overlay, specifically the progress bar for hold actions.
+ * Interacts with HandlerClientTickEvent to get hold progress.
  */
 @Mod.EventBusSubscriber
 public class HandlerRenderGameOverlayEvent {
 
-    // Переиспользуемый builder для формирования строки прогресса
+    // Reusable StringBuilder for building the loading bar string to minimize allocations
     private static final StringBuilder LOADING_BAR_BUILDER = new StringBuilder(16);
 
     /**
-     * Обработчик события отрисовки интерфейса
-     * Отображает прогресс-бар только при активном процессе удержания
+     * Event handler for rendering the game overlay.
+     * Checks if a hold action is in progress and renders the progress bar if applicable.
+     * @param event The render event.
      */
     @SubscribeEvent
     public static void onRenderGameOverlayEvent(RenderGameOverlayEvent.Post event) {
@@ -32,13 +30,12 @@ public class HandlerRenderGameOverlayEvent {
         Minecraft mc = Minecraft.getMinecraft();
         if (mc == null) return;
 
-        // Показываем только от первого лица
+        // Only render in first-person view
         if (mc.gameSettings.thirdPersonView != 0) return;
 
-        // Вычисляем прогресс от 0.0 до 1.0
         long now = System.currentTimeMillis();
         float elapsed = (now - HandlerClientTickEvent.startHoldTime) / 1000.0F;
-        float progress = Math.min(elapsed / HandlerClientTickEvent.MAX_HOLD_TIME, 1.0F);
+        float progress = Math.min(elapsed / HandlerClientTickEvent.currentMaxHoldTime, 1.0F);
 
         if (progress < 1.0F && progress > 0.0F) {
             drawLoadingBar(event, progress, mc);
@@ -46,8 +43,11 @@ public class HandlerRenderGameOverlayEvent {
     }
 
     /**
-     * Отрисовывает индикатор прогресса в виде сегментированной полосы
-     * Использует специальные символы для визуализации заполнения
+     * Draws the loading bar on the screen.
+     * Uses special characters for filled and empty segments.
+     * @param event The render event.
+     * @param progress The current progress (0.0 to 1.0).
+     * @param mc The Minecraft instance.
      */
     private static void drawLoadingBar(RenderGameOverlayEvent.Post event, float progress, Minecraft mc) {
         if (progress <= 0.0F) return;
@@ -60,11 +60,9 @@ public class HandlerRenderGameOverlayEvent {
         final String emptyChar = "▯";
         final int totalSegments = 13;
 
-        // Вычисляем количество заполненных сегментов
         int filledSegments = (int) (progress * totalSegments);
         filledSegments = Math.min(filledSegments, totalSegments);
 
-        // Формируем строку прогресса
         LOADING_BAR_BUILDER.setLength(0);
         for (int i = 0; i < filledSegments; i++) {
             LOADING_BAR_BUILDER.append(filledChar);
@@ -74,14 +72,12 @@ public class HandlerRenderGameOverlayEvent {
         }
         String text = LOADING_BAR_BUILDER.toString();
 
-        // Позиционируем и отрисовываем текст
         int width = mc.fontRenderer.getStringWidth(text);
         int x = centerX - width / 2;
         int y = centerY + 4;
 
         GlStateManager.enableBlend();
 
-        // Устанавливаем режим смешивания как в оригинальном коде
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR,
                 GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR,
@@ -93,7 +89,6 @@ public class HandlerRenderGameOverlayEvent {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         mc.fontRenderer.drawString(text, x, y, 0xFFFFFF);
 
-        // Восстанавливаем стандартный режим смешивания
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA,
                 GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
