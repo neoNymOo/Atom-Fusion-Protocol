@@ -1,5 +1,4 @@
 package com.nymoo.afp.common.handler;
-
 import com.nymoo.afp.ModDataSyncManager;
 import com.nymoo.afp.common.entity.EntityExoskeleton;
 import com.nymoo.afp.common.item.IPowerArmor;
@@ -26,11 +25,8 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Mouse;
 import com.nymoo.afp.AtomFusionProtocol;
-
 import java.util.EnumSet;
-
 import static com.nymoo.afp.common.util.UtilEntityExoskeleton.hasBooleanTag;
-
 /**
  * Handles client-side tick events for detecting and processing hold actions related to exoskeleton interactions.
  * Monitors mouse and key inputs, manages progress timing, plays/stops sounds, and sends network messages via ModDataSyncManager.
@@ -63,7 +59,12 @@ public class HandlerClientTickEvent {
             EntityEquipmentSlot.LEGS,
             EntityEquipmentSlot.FEET
     );
-
+    // Fade effect variables for power armor entry/exit
+    public static long fadeStartTime = 0L;
+    public static final float FADE_DELAY = -1.0F; // Delay before fade starts (in seconds)
+    public static final float FADE_DURATION_IN = 0.5F; // seconds to fade to black
+    public static final float FADE_HOLD = 0.5F; // seconds to hold black
+    public static final float FADE_DURATION_OUT = 0.5F; // seconds to fade out
     /**
      * Client tick event handler.
      * Processes hold actions at the end of each tick.
@@ -75,26 +76,21 @@ public class HandlerClientTickEvent {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-
         Minecraft mc = Minecraft.getMinecraft();
         if (mc == null || mc.player == null || mc.world == null) {
             resetHoldAndSoundIfNeeded(mc);
             return;
         }
-
         EntityPlayer player = mc.player;
         World world = mc.world;
         boolean isHoldingRightClick = Mouse.isButtonDown(1);
-
         if (startHoldTime != 0L) {
             long now = System.currentTimeMillis();
             float elapsed = (now - startHoldTime) / 1000.0F;
-
             if (!isHoldStillValid(player, world, isHoldingRightClick)) {
                 resetHoldAndSoundIfNeeded(mc);
                 return;
             }
-
             if (elapsed >= currentMaxHoldTime) {
                 processCompletedHold(player);
                 resetHoldAndSoundIfNeeded(mc);
@@ -103,7 +99,6 @@ public class HandlerClientTickEvent {
             attemptStartHold(player, world, isHoldingRightClick, mc);
         }
     }
-
     /**
      * Checks if the current hold action is still valid based on input and targeting.
      * @param player The player.
@@ -115,11 +110,9 @@ public class HandlerClientTickEvent {
         if (currentMode == 3) {
             return KeybindingExitPowerArmor.keys.isKeyDown() && !player.isSneaking() && isWearingPowerArmor(player);
         }
-
         if (!isHoldingRightClick) {
             return false;
         }
-
         RayTraceResult mop = Minecraft.getMinecraft().objectMouseOver;
         if (mop == null || mop.typeOfHit != RayTraceResult.Type.ENTITY) {
             return false;
@@ -133,26 +126,20 @@ public class HandlerClientTickEvent {
         if (chestStack.isEmpty()) {
             return false;
         }
-
         float hitY = (float) (mop.hitVec.y - exo.posY);
         EntityEquipmentSlot clickedSlotTemp = getClickedSlot(hitY);
-
         if (clickedSlotTemp != EntityEquipmentSlot.CHEST || clickedSlotTemp != currentSlot) {
             return false;
         }
-
         double distanceSq = player.getDistanceSq(exo);
         if (distanceSq > 1.0D) {
             return false;
         }
-
         float yawDiff = MathHelper.wrapDegrees(player.rotationYaw - exo.rotationYaw);
         if (yawDiff < -55.0F || yawDiff > 55.0F) {
             return false;
         }
-
         ItemStack held = player.getHeldItem(EnumHand.MAIN_HAND);
-
         if (currentMode == 0 || currentMode == 1) {
             if (!player.isSneaking() || !hasBooleanTag(chestStack, "soldered")) {
                 return false;
@@ -172,7 +159,6 @@ public class HandlerClientTickEvent {
         }
         return false;
     }
-
     /**
      * Processes the completed hold action by sending network message.
      * Interconnects with ModDataSyncManager for sending messages and KeybindingExitPowerArmor for exit.
@@ -184,8 +170,11 @@ public class HandlerClientTickEvent {
         } else if (currentMode == 3) {
             AtomFusionProtocol.PACKET_HANDLER.sendToServer(new KeybindingExitPowerArmor.KeyBindingPressedMessage());
         }
+        // Start fade effect for entry (2) or exit (3)
+        if (currentMode == 2 || currentMode == 3) {
+            fadeStartTime = System.currentTimeMillis() + (long)(FADE_DELAY * 1000);
+        }
     }
-
     /**
      * Attempts to start a new hold action based on input.
      * @param player The player.
@@ -198,11 +187,9 @@ public class HandlerClientTickEvent {
             startHold(3, ARMOR_HOLD_TIME, -1, null, player.posX, player.posY, player.posZ, mc);
             return;
         }
-
         if (!isHoldingRightClick) {
             return;
         }
-
         RayTraceResult mop = mc.objectMouseOver;
         if (mop == null || mop.typeOfHit != RayTraceResult.Type.ENTITY) {
             return;
@@ -216,23 +203,19 @@ public class HandlerClientTickEvent {
         if (chestStack.isEmpty()) {
             return;
         }
-
         float hitY = (float) (mop.hitVec.y - exo.posY);
         EntityEquipmentSlot clickedSlotTemp = getClickedSlot(hitY);
         if (clickedSlotTemp != EntityEquipmentSlot.CHEST) {
             return;
         }
-
         double distanceSq = player.getDistanceSq(exo);
         if (distanceSq > 1.0D) {
             return;
         }
-
         float yawDiff = MathHelper.wrapDegrees(player.rotationYaw - exo.rotationYaw);
         if (yawDiff < -55.0F || yawDiff > 55.0F) {
             return;
         }
-
         ItemStack held = player.getHeldItem(EnumHand.MAIN_HAND);
         if (player.isSneaking()) {
             if (hasBooleanTag(chestStack, "soldered")) {
@@ -250,7 +233,6 @@ public class HandlerClientTickEvent {
             }
         }
     }
-
     /**
      * Starts a hold action, setting variables and playing sound.
      * @param mode The action mode.
@@ -273,7 +255,6 @@ public class HandlerClientTickEvent {
             mc.getSoundHandler().playSound(currentSound);
         }
     }
-
     /**
      * Determines the clicked slot based on hit Y position.
      * Uses thresholds from EntityExoskeleton.
@@ -290,7 +271,6 @@ public class HandlerClientTickEvent {
         }
         return clickedSlot;
     }
-
     /**
      * Checks if all armor slots on exoskeleton are base 'exo' type.
      * @param exo The exoskeleton.
@@ -305,7 +285,6 @@ public class HandlerClientTickEvent {
         }
         return true;
     }
-
     /**
      * Checks if player is wearing power armor.
      * @param player The player.
@@ -315,7 +294,6 @@ public class HandlerClientTickEvent {
         ItemStack chest = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
         return !chest.isEmpty() && chest.getItem() instanceof IPowerArmor;
     }
-
     /**
      * Resets hold state and stops sound.
      * Called on interruption or completion.
@@ -334,7 +312,6 @@ public class HandlerClientTickEvent {
             currentSlot = null;
         }
     }
-
     /**
      * Custom positioned sound for loading process.
      * Non-repeating, full volume.
