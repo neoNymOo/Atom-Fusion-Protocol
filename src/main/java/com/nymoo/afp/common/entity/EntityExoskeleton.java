@@ -31,10 +31,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @ModElementRegistry.ModElement.Tag
 public class EntityExoskeleton extends ModElementRegistry.ModElement {
     public static final int ENTITYID = 1;
-    private static final EntityEquipmentSlot[] ARMOR_SLOTS = EntityEquipmentSlot.values();
+
     public EntityExoskeleton(ModElementRegistry instance) {
         super(instance, 1);
     }
+
     @Override
     public void initElements() {
         elements.entities.add(() -> EntityEntryBuilder.create()
@@ -44,12 +45,14 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
                 .tracker(64, 3, true)
                 .build());
     }
+
     @SideOnly(Side.CLIENT)
     @Override
     public void preInit(FMLPreInitializationEvent event) {
         RenderingRegistry.registerEntityRenderingHandler(Exoskeleton.class, renderManager -> {
             RenderBiped<Exoskeleton> renderer = new RenderBiped<Exoskeleton>(renderManager, new ModelBiped(), 0.5f) {
                 private final ResourceLocation TEXTURE = new ResourceLocation("afp:textures/misc/blank.png");
+
                 @Override
                 protected ResourceLocation getEntityTexture(Exoskeleton entity) {
                     return TEXTURE;
@@ -65,15 +68,17 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
             return renderer;
         });
     }
+
     public static class Exoskeleton extends EntityCreature {
-        private static final float[] SLOT_HEIGHT_THRESHOLDS = {1.5F, 0.7F, 0.35F};
-        private static final EntityEquipmentSlot[] SLOT_ORDER = {
+        public static final float[] SLOT_HEIGHT_THRESHOLDS = {1.5F, 0.7F, 0.35F};
+        public static final EntityEquipmentSlot[] SLOT_ORDER = {
                 EntityEquipmentSlot.HEAD,
                 EntityEquipmentSlot.CHEST,
                 EntityEquipmentSlot.LEGS,
                 EntityEquipmentSlot.FEET
         };
         private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+
         public Exoskeleton(World world) {
             super(world);
             setSize(AFPConfig.exoskeletonHitboxWidth, AFPConfig.exoskeletonHitboxHeight);
@@ -84,10 +89,12 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
             setItemStackToSlot(EntityEquipmentSlot.LEGS, new ItemStack(ArmorExo.leggings));
             setItemStackToSlot(EntityEquipmentSlot.FEET, new ItemStack(ArmorExo.boots));
         }
+
         @Override
         public boolean isEntityInvulnerable(DamageSource source) {
             return true;
         }
+
         @Override
         public boolean attackEntityFrom(DamageSource source, float amount) {
             if (!world.isRemote && source.getTrueSource() instanceof EntityPlayer) {
@@ -116,18 +123,22 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
             }
             return false;
         }
+
         @Override
         public boolean canBePushed() {
             return false;
         }
+
         @Override
         public boolean canBeCollidedWith() {
             return true;
         }
+
         @Override
         protected boolean canDespawn() {
             return false;
         }
+
         @Override
         public void onUpdate() {
             super.onUpdate();
@@ -143,12 +154,14 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
                 }
             }
         }
+
         @Override
         public void setLocationAndAngles(double x, double y, double z, float yaw, float pitch) {
             super.setLocationAndAngles(x, y, z, yaw, pitch);
             rotationYawHead = yaw;
             renderYawOffset = yaw;
         }
+
         @Override
         public boolean processInteract(EntityPlayer player, EnumHand hand) {
             if (world.isRemote) return true;

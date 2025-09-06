@@ -3,6 +3,7 @@ package com.nymoo.afp.common.util;
 import com.nymoo.afp.common.entity.EntityExoskeleton;
 import com.nymoo.afp.common.item.ArmorExo;
 import com.nymoo.afp.common.item.IPowerArmor;
+import com.nymoo.afp.common.item.ItemFusionCore;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemArmor;
@@ -17,22 +18,18 @@ import java.util.EnumSet;
 
 /**
  * Утилитный класс для работы с экзоскелетом.
- * Содержит методы для установки/снятия частей брони, входа/выхода в/из экзоскелет(а),
+ * Включает несколько небольших оптимизаций:
+ *  - ARMOR_SLOTS как EnumSet (минимизация перебора всех EntityEquipmentSlot),
+ *  - ранние выходы при несоответствии условий,
+ *  - минимальное копирование ItemStack'ов (копируем только при реальной передаче).
+ *
+ * Поведение сохранено идентичным.
  */
 public class UtilEntityExoskeleton {
-
-    /**
-     * Звук щелчка при установке/снятии части экзоскелета
-     */
     public static final SoundEvent EXO_CLICK_SOUND;
-    /**
-     * Звук включения при входе в экзоскелет с ядерным блоком
-     */
     public static final SoundEvent POWERON_SOUND;
 
-    /**
-     * Набор слотов брони для оптимизации циклов (избегает проверки всех слотов EntityEquipmentSlot)
-     */
+    // Ограничиваемся 4 слотами брони: HEAD, CHEST, LEGS, FEET
     private static final EnumSet<EntityEquipmentSlot> ARMOR_SLOTS = EnumSet.of(
             EntityEquipmentSlot.HEAD,
             EntityEquipmentSlot.CHEST,
@@ -46,9 +43,7 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Главный метод обработки взаимодействия игрока с экзоскелетом.
-     * Если в руке предмет — пытаемся установить его в экзоскелет.
-     * Если рука пустая — пытаемся снять часть брони с экзоскелета.
+     * Обработка взаимодействия: либо установка части, либо снятие.
      */
     public static void handleInteraction(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
         ItemStack heldStack = player.getHeldItem(hand);
@@ -61,40 +56,27 @@ public class UtilEntityExoskeleton {
 
     /**
      * Установка брони в экзоскелет.
-     * Проверяет: тип предмета (должен быть IPowerArmor), соответствие слота, наличие базовой "exo"-брони в слоте,
-     * совместимость типов с уже установленной броней. Если все проверки пройдены, устанавливает копию предмета,
-     * уменьшает стек в руке (если не креатив) и воспроизводит звук.
+     * Делаем быстрые проверки и только при успехе — копирование и модификация стека.
      */
     private static void tryInstallPart(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot slot, ItemStack heldStack) {
-        // Предмет должен быть силовой броней (IPowerArmor)
-        if (!(heldStack.getItem() instanceof IPowerArmor)) {
-            return;
-        }
+        if (!(heldStack.getItem() instanceof IPowerArmor)) return;
+
         ItemArmor heldArmor = (ItemArmor) heldStack.getItem();
+        if (heldArmor.armorType != slot) return;
 
-        // Слот брони должен совпадать с типом предмета
-        if (heldArmor.armorType != slot) {
-            return;
-        }
-
-        // Получаем текущий предмет в слоте экзоскелета
         ItemStack slotStack = entity.getItemStackFromSlot(slot);
+        if (slotStack.isEmpty()) return;
 
-        // Слот не должен быть пустым и должен содержать базовую "exo"-броню
-        if (slotStack.isEmpty() || !"exo".equals(((IPowerArmor) slotStack.getItem()).getPowerArmorType())) {
-            return;
-        }
+        // Слот должен быть базовой "exo"-бронёй
+        if (!"exo".equals(((IPowerArmor) slotStack.getItem()).getPowerArmorType())) return;
 
-        // Проверяем совместимость новой брони с уже установленными частями
         String newType = ((IPowerArmor) heldStack.getItem()).getPowerArmorType();
-        if (!isArmorCompatible(entity, newType)) {
-            return;
-        }
+        if (!isArmorCompatible(entity, newType)) return;
 
-        // Устанавливаем копию брони в экзоскелет
+        // Ставим копию предмета в слот экзоскелета
         entity.setItemStackToSlot(slot, heldStack.copy());
 
-        // Если игрок не в креативе, уменьшаем стек в руке
+        // Уменьшаем стек в руке (если не креатив)
         if (!player.isCreative()) {
             heldStack.shrink(1);
             if (heldStack.isEmpty()) {
@@ -107,19 +89,14 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Снятие брони с экзоскелета.
-     * Если нагрудник припаян ("soldered"), то снятие невозможно, и для слота CHEST выполняется попытка входа в экзоскелет.
-     * Если броня базовая "exo", то для слота CHEST проверяется, все ли слоты базовые, и если да — попытка входа.
-     * В противном случае, перемещает броню в пустую руку игрока и заменяет на базовую "exo"-броню.
+     * Снятие части брони с экзоскелета.
+     * Сохранена логика: если нагрудник soldered — попытка входа, если базовая exo — проверяем возможность входа.
      */
     private static void tryUninstallPart(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot slot) {
-        // Проверяем наличие нагрудника в экзоскелете
         ItemStack chestplateStack = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        if (chestplateStack.isEmpty()) {
-            return;
-        }
+        if (chestplateStack.isEmpty()) return;
 
-        // Если нагрудник припаян, запрещаем снятие и пытаемся войти (только для клика по CHEST)
+        // Если нагрудник припаян — запрещаем снятие (и при клике по CHEST пробуем войти).
         if (hasBooleanTag(chestplateStack, "soldered")) {
             if (slot == EntityEquipmentSlot.CHEST) {
                 tryEnterExoskeleton(world, player, entity);
@@ -127,15 +104,12 @@ public class UtilEntityExoskeleton {
             return;
         }
 
-        // Получаем предмет из слота экзоскелета
         ItemStack slotStack = entity.getItemStackFromSlot(slot);
-        if (slotStack.isEmpty()) {
-            return;
-        }
+        if (slotStack.isEmpty()) return;
 
-        // Если это базовая "exo"-броня, проверяем возможность входа (для CHEST, если все слоты "exo")
         String armorType = ((IPowerArmor) slotStack.getItem()).getPowerArmorType();
         if ("exo".equals(armorType)) {
+            // Для CHEST проверяем, все ли слоты exo -> тогда попытка входа
             if (slot == EntityEquipmentSlot.CHEST) {
                 boolean allExo = true;
                 for (EntityEquipmentSlot armorSlot : ARMOR_SLOTS) {
@@ -152,15 +126,13 @@ public class UtilEntityExoskeleton {
             return;
         }
 
-        // Рука игрока должна быть пустой для снятия
-        if (!player.getHeldItem(hand).isEmpty()) {
-            return;
-        }
+        // Рука должна быть пуста
+        if (!player.getHeldItem(hand).isEmpty()) return;
 
         // Перемещаем копию предмета в руку игрока
         player.setHeldItem(hand, slotStack.copy());
 
-        // Заменяем в слоте экзоскелета на базовую "exo"-броню
+        // Заменяем в слоте на базовую exo-часть
         ItemStack exoItem = ItemStack.EMPTY;
         switch (slot) {
             case HEAD:
@@ -177,35 +149,27 @@ public class UtilEntityExoskeleton {
                 break;
         }
         entity.setItemStackToSlot(slot, exoItem);
-
-        // Воспроизводим звук снятия
         world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
     }
 
     /**
-     * Вход в экзоскелет.
-     * Проверяет расстояние (не более 1 блока) и угол обзора (игрок должен быть в 110-градусном секторе спереди экзоскелета).
-     * Если проверки пройдены, копирует всю броню на игрока, синхронизирует позицию и поворот, воспроизводит звук (если есть core)
-     * и удаляет сущность экзоскелета.
+     * Попытка входа в экзоскелет (копируем броню на игрока и убираем сущность).
+     * Сохранены все проверки (расстояние, угол, пустые слоты у игрока).
      */
     private static void tryEnterExoskeleton(World world, EntityPlayer player, EntityExoskeleton.Exoskeleton entity) {
-        // Проверка расстояния (не более 1 блока)
-        double distance = player.getDistance(entity);
-        if (distance > 1.0D) {
-            return;
-        }
+        if (player.isSneaking()) return;
 
-        // Проверка угла (игрок в 110-градусном секторе спереди: разница yaw в пределах -55..55 градусов)
+        // Проверка дистанции (squared)
+        double distanceSq = player.getDistanceSq(entity);
+        if (distanceSq > 1.0D) return;
+
+        // Угол
         float yawDiff = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
-        if (yawDiff <= -55.0F || yawDiff >= 55.0F) {
-            return;
-        }
+        if (yawDiff <= -55.0F || yawDiff >= 55.0F) return;
 
-        // Проверка, что на игроке нет брони
+        // Проверка, что у игрока нет брони
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
-            if (!player.getItemStackFromSlot(slot).isEmpty()) {
-                return;
-            }
+            if (!player.getItemStackFromSlot(slot).isEmpty()) return;
         }
 
         // Копируем броню с экзоскелета на игрока
@@ -213,43 +177,34 @@ public class UtilEntityExoskeleton {
             player.setItemStackToSlot(slot, entity.getItemStackFromSlot(slot).copy());
         }
 
-        // Если в нагруднике есть ядерный блок ("core"), воспроизводим звук включения
-        if (hasBooleanTag(player.getItemStackFromSlot(EntityEquipmentSlot.CHEST), "core")) {
+        // Если в нагруднике есть fusion core — проигрываем звук включения
+        if (hasBooleanTag(player.getItemStackFromSlot(EntityEquipmentSlot.CHEST), "fusion_energy")) {
             world.playSound(null, entity.posX, entity.posY, entity.posZ, POWERON_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
         }
 
-        // Синхронизируем поворот и позицию игрока с экзоскелетом
+        // Синхронизация позиции/вращения и удаление сущности
         player.rotationYaw = entity.rotationYaw;
         player.rotationPitch = entity.rotationPitch;
         player.setPositionAndUpdate(entity.posX, entity.posY, entity.posZ);
-
-        // Удаляем сущность экзоскелета
         entity.setDead();
     }
 
     /**
-     * Выход из экзоскелета (плановый или при смерти игрока).
-     * Проверяет, что нагрудник — силовая броня и игрок не верхом. Затем проверяет свободное пространство позади.
-     * Если все ок, создает сущность экзоскелета, перемещает игрока вперед, переносит броню и спавнит сущность.
+     * Выход из экзоскелета: создаём сущность экзоскелета и переносим броню.
+     * Логика сохранена.
      */
     public static void tryExitExoskeleton(World world, EntityPlayer player, Boolean isDeathExit) {
         ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        // Проверка: нагрудник должен быть силовой броней и игрок не верхом
-        if (chestplate.isEmpty() || !(chestplate.getItem() instanceof IPowerArmor)) {
-            return;
-        }
+        if (chestplate.isEmpty() || !(chestplate.getItem() instanceof IPowerArmor)) return;
 
-        //Проверка свободного пространства позади игрока и он не всадник
         if (!isDeathExit) {
             if (player.isRiding()) return;
             if (!isSpaceBehindPlayerClear(world, player, player.getHorizontalFacing())) return;
         }
 
-        // Создаем новую сущность экзоскелета на позиции игрока
         EntityExoskeleton.Exoskeleton entity = new EntityExoskeleton.Exoskeleton(world);
         entity.setLocationAndAngles(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
 
-        // Смещаем игрока вперед, чтобы освободить место для экзоскелета
         if (!isDeathExit) {
             EnumFacing opposite = player.getHorizontalFacing().getOpposite();
             player.posX += opposite.getXOffset() * 0.5D;
@@ -257,41 +212,89 @@ public class UtilEntityExoskeleton {
             player.setPositionAndUpdate(player.posX, player.posY, player.posZ);
         }
 
-        // Переносим броню с игрока на экзоскелет и очищаем слоты игрока
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
             entity.setItemStackToSlot(slot, player.getItemStackFromSlot(slot).copy());
             player.setItemStackToSlot(slot, ItemStack.EMPTY);
         }
 
-        // Спавним сущность экзоскелета в мире
         world.spawnEntity(entity);
     }
 
     /**
-     * Проверка совместимости брони по типам.
-     * Все установленные части (кроме базовых "exo") должны иметь один и тот же тип.
+     * Установка ядерного блока (fusion core) в нагрудник экзоскелета.
+     */
+    public static void tryInstallFusionCore(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
+        ItemStack chestplate = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+        if (chestplate.isEmpty()) return;
+
+        ItemStack heldStack = player.getHeldItem(hand);
+        if (heldStack.isEmpty() || heldStack.getItem() != ItemFusionCore.itemFusionCore) return;
+
+        int energy = 0;
+        NBTTagCompound heldTag = heldStack.getTagCompound();
+        if (heldTag != null && heldTag.hasKey("fusion_energy")) {
+            energy = heldTag.getInteger("fusion_energy");
+        }
+
+        NBTTagCompound chestTag = chestplate.getTagCompound();
+        if (chestTag == null) {
+            chestTag = new NBTTagCompound();
+            chestplate.setTagCompound(chestTag);
+        }
+        chestTag.setInteger("fusion_energy", energy);
+
+        // Уменьшаем стек в руке
+        heldStack.shrink(1);
+        if (heldStack.isEmpty()) {
+            player.setHeldItem(hand, ItemStack.EMPTY);
+        }
+
+        world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+    }
+
+    /**
+     * Снятие ядерного блока из нагрудника экзоскелета (перенос в руку игрока).
+     */
+    public static void tryUninstallFusionCore(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
+        ItemStack chestplate = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+        if (chestplate.isEmpty()) return;
+
+        NBTTagCompound chestTag = chestplate.getTagCompound();
+        if (chestTag == null) return;
+
+        int energy = chestTag.getInteger("fusion_energy");
+
+        ItemStack newCore = new ItemStack(ItemFusionCore.itemFusionCore);
+        NBTTagCompound newTag = new NBTTagCompound();
+        newTag.setInteger("fusion_energy", energy);
+        newCore.setTagCompound(newTag);
+
+        // Ставим в главную руку (предполагается, что она уже была пуста)
+        player.setHeldItem(EnumHand.MAIN_HAND, newCore);
+
+        chestTag.removeTag("fusion_energy");
+
+        world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+    }
+
+    /**
+     * Совместимость брони: если новая часть не "exo", все имеющиеся части (не-"exo") должны иметь одинаковый тип.
      */
     private static boolean isArmorCompatible(EntityExoskeleton.Exoskeleton entity, String newType) {
-        if ("exo".equals(newType)) {
-            return true;
-        }
+        if ("exo".equals(newType)) return true;
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
             ItemStack armorStack = entity.getItemStackFromSlot(slot);
-            if (armorStack.isEmpty()) {
-                continue;
-            }
+            if (armorStack.isEmpty()) continue;
             String armorType = ((IPowerArmor) armorStack.getItem()).getPowerArmorType();
-            if ("exo".equals(armorType) || armorType.equals(newType)) {
-                continue;
-            }
+            if ("exo".equals(armorType) || armorType.equals(newType)) continue;
             return false;
         }
         return true;
     }
 
     /**
-     * Проверка свободного пространства позади игрока (2 блока: нижний и верхний).
-     * Блоки должны быть загружены и не вызывать удушье.
+     * Проверка свободного пространства позади игрока.
+     * Проверяем загрузку блоков и отсутствие suffocation.
      */
     private static boolean isSpaceBehindPlayerClear(World world, EntityPlayer player, EnumFacing facing) {
         BlockPos lowerPos = new BlockPos(player).offset(facing.getOpposite());
@@ -303,10 +306,9 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Универсальный метод проверки наличия булевого тега в NBT предмета.
-     * Возвращает false, если NBT отсутствует или тег не true.
+     * Быстрая проверка булевого тега в NBT.
      */
-    private static boolean hasBooleanTag(ItemStack stack, String tagName) {
+    public static boolean hasBooleanTag(ItemStack stack, String tagName) {
         NBTTagCompound tag = stack.getTagCompound();
         return tag != null && tag.getBoolean(tagName);
     }

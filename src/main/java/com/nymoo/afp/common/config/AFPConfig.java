@@ -16,7 +16,7 @@ public class AFPConfig {
     public static boolean canPlayerUnequipPowerArmor = false;
     public static boolean canPlayerEquipPowerArmor = false;
     public static boolean canExoskeletonSwingArms = false;
-    public static float exoskeletonHitboxWidth = 0.75F;
+    public static float exoskeletonHitboxWidth = 0.65F;
     public static float exoskeletonHitboxHeight = 2.0F;
     public static float powerArmorSpeedMultiplier = 0.85F;
     public static float servoVolume = 0.55F;
@@ -106,7 +106,7 @@ public class AFPConfig {
         canPlayerUnequipPowerArmor = config.getBoolean("can_player_unequip_power_armor", CATEGORY_GENERAL, false, "Can the player manually unequip power armor?");
         canPlayerEquipPowerArmor = config.getBoolean("can_player_equip_power_armor", CATEGORY_GENERAL, false, "Can the player manually equip power armor?");
         canExoskeletonSwingArms = config.getBoolean("can_exoskeleton_swing_arms", CATEGORY_GENERAL, false, "Should the exoskeleton swing its arms?");
-        exoskeletonHitboxWidth = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_width", 0.75f, "Exoskeleton hitbox width. [default: 0.75]").getDouble();
+        exoskeletonHitboxWidth = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_width", 0.65f, "Exoskeleton hitbox width. [default: 0.65]").getDouble();
         exoskeletonHitboxHeight = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_height", 2.0f, "Exoskeleton hitbox height. [default: 2.0]").getDouble();
         powerArmorSpeedMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_speed_multiplier", 0.85f, "The player's speed multiplier when wearing power armor is multiplied by the player's current speed. [default: 0.85]").getDouble();
         powerArmorKnockbackMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_knockback_multiplier", 0.0f, "The discard force multiplier when hitting a player in power armor is multiplied by the current discard force. [default: 0.0]").getDouble();

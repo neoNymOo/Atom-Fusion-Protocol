@@ -8,6 +8,15 @@
       }
     ]
   },
+  "fusion_core_interact": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "afp:fusion_core_interact",
+        "stream": false
+      }
+    ]
+  },
   "servo_step1": {
     "category": "player",
     "sounds": [
