@@ -39,9 +39,9 @@ import static com.nymoo.afp.common.util.UtilEntityExoskeleton.hasBooleanTag;
 @Mod.EventBusSubscriber
 public class HandlerClientTickEvent {
     // Duration for holding to install/uninstall fusion core (in seconds)
-    public static final float FUSION_HOLD_TIME = 1.5F;
+    public static final float FUSION_HOLD_TIME = 1.8F;
     // Duration for holding to enter/exit armor (in seconds)
-    public static final float ARMOR_HOLD_TIME = 3.0F;
+    public static final float ARMOR_HOLD_TIME = 2.5F;
     // Sound event for interaction process
     private static final SoundEvent INTERACT_SOUND = new SoundEvent(new ResourceLocation("afp", "fusion_core_interact"));
     // Time when hold started
