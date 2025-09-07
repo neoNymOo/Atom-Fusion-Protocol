@@ -1,4 +1,5 @@
 package com.nymoo.afp.common.handler;
+
 import com.nymoo.afp.ModDataSyncManager;
 import com.nymoo.afp.common.entity.EntityExoskeleton;
 import com.nymoo.afp.common.item.IPowerArmor;
@@ -11,6 +12,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
@@ -25,8 +27,12 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Mouse;
 import com.nymoo.afp.AtomFusionProtocol;
+import com.nymoo.afp.common.util.UtilEntityExoskeleton;
+
 import java.util.EnumSet;
+
 import static com.nymoo.afp.common.util.UtilEntityExoskeleton.hasBooleanTag;
+
 /**
  * Handles client-side tick events for detecting and processing hold actions related to exoskeleton interactions.
  * Monitors mouse and key inputs, manages progress timing, plays/stops sounds, and sends network messages via ModDataSyncManager.
@@ -108,7 +114,7 @@ public class HandlerClientTickEvent {
      */
     private static boolean isHoldStillValid(EntityPlayer player, World world, boolean isHoldingRightClick) {
         if (currentMode == 3) {
-            return KeybindingExitPowerArmor.keys.isKeyDown() && !player.isSneaking() && isWearingPowerArmor(player);
+            return KeybindingExitPowerArmor.keys.isKeyDown() && !player.isSneaking() && isWearingPowerArmor(player) && !player.isRiding() && UtilEntityExoskeleton.isSpaceBehindPlayerClear(world, player, player.getHorizontalFacing());
         }
         if (!isHoldingRightClick) {
             return false;
@@ -183,7 +189,7 @@ public class HandlerClientTickEvent {
      * @param mc The Minecraft instance.
      */
     private static void attemptStartHold(EntityPlayer player, World world, boolean isHoldingRightClick, Minecraft mc) {
-        if (KeybindingExitPowerArmor.keys.isKeyDown() && !player.isSneaking() && isWearingPowerArmor(player)) {
+        if (KeybindingExitPowerArmor.keys.isKeyDown() && !player.isSneaking() && isWearingPowerArmor(player) && !player.isRiding() && UtilEntityExoskeleton.isSpaceBehindPlayerClear(world, player, player.getHorizontalFacing())) {
             startHold(3, ARMOR_HOLD_TIME, -1, null, player.posX, player.posY, player.posZ, mc);
             return;
         }
