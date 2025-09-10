@@ -8,7 +8,10 @@
   "mixins": [
     "MixinSlot",
     "MixinBlockDispenser",
-    "MixinEntityPlayer"
+    "MixinEntityPlayer",
+    "MixinEntity",
+    "MixinEntityLivingBase",
+    "EntityAccessor"
   ],
   "client": [
     "MixinModelBiped"

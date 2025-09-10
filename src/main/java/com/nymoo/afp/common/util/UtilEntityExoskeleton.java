@@ -31,17 +31,20 @@ public class UtilEntityExoskeleton {
             EntityEquipmentSlot.LEGS,
             EntityEquipmentSlot.FEET
     );
+
     static {
         EXO_CLICK_SOUND = SoundEvent.REGISTRY.getObject(new ResourceLocation("afp", "exo_click"));
         POWERON_SOUND = SoundEvent.REGISTRY.getObject(new ResourceLocation("afp", "poweron"));
     }
+
     /**
      * Handles general interaction with exoskeleton.
      * Delegates to install or uninstall based on held item.
-     * @param world The world.
-     * @param player The player.
-     * @param hand The hand.
-     * @param entity The exoskeleton.
+     *
+     * @param world       The world.
+     * @param player      The player.
+     * @param hand        The hand.
+     * @param entity      The exoskeleton.
      * @param clickedSlot The clicked slot.
      */
     public static void handleInteraction(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
@@ -52,14 +55,16 @@ public class UtilEntityExoskeleton {
             tryUninstallPart(world, player, hand, entity, clickedSlot);
         }
     }
+
     /**
      * Attempts to install an armor part into the exoskeleton.
      * Checks compatibility and replaces base 'exo' part.
-     * @param world The world.
-     * @param player The player.
-     * @param hand The hand.
-     * @param entity The exoskeleton.
-     * @param slot The slot.
+     *
+     * @param world     The world.
+     * @param player    The player.
+     * @param hand      The hand.
+     * @param entity    The exoskeleton.
+     * @param slot      The slot.
      * @param heldStack The held stack.
      */
     private static void tryInstallPart(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot slot, ItemStack heldStack) {
@@ -80,14 +85,16 @@ public class UtilEntityExoskeleton {
         }
         world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
     }
+
     /**
      * Attempts to uninstall an armor part from the exoskeleton.
      * Replaces with base 'exo' part and gives to player.
-     * @param world The world.
+     *
+     * @param world  The world.
      * @param player The player.
-     * @param hand The hand.
+     * @param hand   The hand.
      * @param entity The exoskeleton.
-     * @param slot The slot.
+     * @param slot   The slot.
      */
     private static void tryUninstallPart(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot slot) {
         ItemStack chestplateStack = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
@@ -121,11 +128,13 @@ public class UtilEntityExoskeleton {
         entity.setItemStackToSlot(slot, exoItem);
         world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
     }
+
     /**
      * Attempts to enter the exoskeleton.
      * Transfers armor to player, plays sound if powered, updates position, removes entity.
      * Called from network handler on server.
-     * @param world The world.
+     *
+     * @param world  The world.
      * @param player The player.
      * @param entity The exoskeleton.
      */
@@ -141,7 +150,8 @@ public class UtilEntityExoskeleton {
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
             player.setItemStackToSlot(slot, entity.getItemStackFromSlot(slot).copy());
         }
-        if (hasBooleanTag(player.getItemStackFromSlot(EntityEquipmentSlot.CHEST), "fusion_energy")) {
+        ItemStack chestplateStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+        if (hasBooleanTag(player.getItemStackFromSlot(EntityEquipmentSlot.CHEST), "fusion_depletion") && chestplateStack.getTagCompound().getFloat("fusion_depletion") < 288000) {
             world.playSound(null, entity.posX, entity.posY, entity.posZ, POWERON_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
         }
         player.rotationYaw = entity.rotationYaw;
@@ -149,12 +159,14 @@ public class UtilEntityExoskeleton {
         player.setPositionAndUpdate(entity.posX, entity.posY, entity.posZ);
         entity.setDead();
     }
+
     /**
      * Attempts to exit the exoskeleton.
      * Creates new exoskeleton entity, transfers armor, updates player position.
      * Called from keybind handler on server.
-     * @param world The world.
-     * @param player The player.
+     *
+     * @param world       The world.
+     * @param player      The player.
      * @param isDeathExit Whether exiting due to death.
      */
     public static void tryExitExoskeleton(World world, EntityPlayer player, Boolean isDeathExit) {
@@ -178,13 +190,15 @@ public class UtilEntityExoskeleton {
         }
         world.spawnEntity(entity);
     }
+
     /**
      * Attempts to install a fusion core into the exoskeleton chestplate.
      * Transfers energy and plays sound.
-     * @param world The world.
-     * @param player The player.
-     * @param hand The hand.
-     * @param entity The exoskeleton.
+     *
+     * @param world       The world.
+     * @param player      The player.
+     * @param hand        The hand.
+     * @param entity      The exoskeleton.
      * @param clickedSlot The slot.
      */
     public static void tryInstallFusionCore(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
@@ -192,30 +206,32 @@ public class UtilEntityExoskeleton {
         if (chestplate.isEmpty()) return;
         ItemStack heldStack = player.getHeldItem(hand);
         if (heldStack.isEmpty() || heldStack.getItem() != ItemFusionCore.itemFusionCore) return;
-        int energy = 0;
+        float energy = 0;
         NBTTagCompound heldTag = heldStack.getTagCompound();
-        if (heldTag != null && heldTag.hasKey("fusion_energy")) {
-            energy = heldTag.getInteger("fusion_energy");
+        if (heldTag != null && heldTag.hasKey("fusion_depletion")) {
+            energy = heldTag.getFloat("fusion_depletion");
         }
         NBTTagCompound chestTag = chestplate.getTagCompound();
         if (chestTag == null) {
             chestTag = new NBTTagCompound();
             chestplate.setTagCompound(chestTag);
         }
-        chestTag.setInteger("fusion_energy", energy);
+        chestTag.setFloat("fusion_depletion", energy);
         heldStack.shrink(1);
         if (heldStack.isEmpty()) {
             player.setHeldItem(hand, ItemStack.EMPTY);
         }
         world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
     }
+
     /**
      * Attempts to uninstall a fusion core from the exoskeleton chestplate.
      * Creates new core item and plays sound.
-     * @param world The world.
-     * @param player The player.
-     * @param hand The hand.
-     * @param entity The exoskeleton.
+     *
+     * @param world       The world.
+     * @param player      The player.
+     * @param hand        The hand.
+     * @param entity      The exoskeleton.
      * @param clickedSlot The slot.
      */
     public static void tryUninstallFusionCore(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
@@ -223,19 +239,21 @@ public class UtilEntityExoskeleton {
         if (chestplate.isEmpty()) return;
         NBTTagCompound chestTag = chestplate.getTagCompound();
         if (chestTag == null) return;
-        int energy = chestTag.getInteger("fusion_energy");
+        float energy = chestTag.getFloat("fusion_depletion");
         ItemStack newCore = new ItemStack(ItemFusionCore.itemFusionCore);
         NBTTagCompound newTag = new NBTTagCompound();
-        newTag.setInteger("fusion_energy", energy);
+        newTag.setFloat("fusion_depletion", energy);
         newCore.setTagCompound(newTag);
         player.setHeldItem(EnumHand.MAIN_HAND, newCore);
-        chestTag.removeTag("fusion_energy");
+        chestTag.removeTag("fusion_depletion");
         world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
     }
+
     /**
      * Checks if the new armor type is compatible with existing parts.
      * All non-'exo' parts must match the new type.
-     * @param entity The exoskeleton.
+     *
+     * @param entity  The exoskeleton.
      * @param newType The new type.
      * @return True if compatible.
      */
@@ -250,9 +268,11 @@ public class UtilEntityExoskeleton {
         }
         return true;
     }
+
     /**
      * Checks if there is space behind the player for exiting.
-     * @param world The world.
+     *
+     * @param world  The world.
      * @param player The player.
      * @param facing The facing direction.
      * @return True if space is clear.
@@ -265,9 +285,11 @@ public class UtilEntityExoskeleton {
                 !world.getBlockState(lowerPos).causesSuffocation() &&
                 !world.getBlockState(upperPos).causesSuffocation();
     }
+
     /**
      * Checks for a boolean NBT tag on the stack.
-     * @param stack The stack.
+     *
+     * @param stack   The stack.
      * @param tagName The tag name.
      * @return True if present and true.
      */

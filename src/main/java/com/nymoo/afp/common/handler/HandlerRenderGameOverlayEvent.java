@@ -22,6 +22,7 @@ public class HandlerRenderGameOverlayEvent {
     /**
      * Event handler for rendering the game overlay.
      * Checks if a hold action is in progress and renders the progress bar if applicable.
+     *
      * @param event The render event.
      */
     @SubscribeEvent
@@ -78,10 +79,11 @@ public class HandlerRenderGameOverlayEvent {
     /**
      * Draws the loading bar on the screen.
      * Uses special characters for filled and empty segments.
-     * @param event The render event.
+     *
+     * @param event    The render event.
      * @param progress The current progress (0.0 to 1.0).
-     * @param mc The Minecraft instance.
-     * @param sr The scaled resolution.
+     * @param mc       The Minecraft instance.
+     * @param sr       The scaled resolution.
      */
     private static void drawLoadingBar(RenderGameOverlayEvent.Post event, float progress, Minecraft mc, ScaledResolution sr) {
         if (progress <= 0.0F) return;
@@ -134,9 +136,10 @@ public class HandlerRenderGameOverlayEvent {
 
     /**
      * Draws a black fade overlay on the screen with the given alpha.
+     *
      * @param alpha The opacity of the overlay (0.0 to 1.0).
-     * @param mc The Minecraft instance.
-     * @param sr The scaled resolution.
+     * @param mc    The Minecraft instance.
+     * @param sr    The scaled resolution.
      */
     private static void drawFadeOverlay(float alpha, Minecraft mc, ScaledResolution sr) {
         if (alpha <= 0.0F) return;
@@ -154,9 +157,9 @@ public class HandlerRenderGameOverlayEvent {
         BufferBuilder bufferbuilder = tessellator.getBuffer();
 
         bufferbuilder.begin(7, net.minecraft.client.renderer.vertex.DefaultVertexFormats.POSITION);
-        bufferbuilder.pos(0.0D, (double)height, -90.0D).endVertex();
-        bufferbuilder.pos((double)width, (double)height, -90.0D).endVertex();
-        bufferbuilder.pos((double)width, 0.0D, -90.0D).endVertex();
+        bufferbuilder.pos(0.0D, height, -90.0D).endVertex();
+        bufferbuilder.pos(width, height, -90.0D).endVertex();
+        bufferbuilder.pos(width, 0.0D, -90.0D).endVertex();
         bufferbuilder.pos(0.0D, 0.0D, -90.0D).endVertex();
         tessellator.draw();
 

@@ -1,10 +1,8 @@
 package com.nymoo.afp.common.keybind;
 
-import com.nymoo.afp.AtomFusionProtocol;
 import com.nymoo.afp.ModElementRegistry;
 import com.nymoo.afp.common.util.UtilEntityExoskeleton;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.MinecraftForge;

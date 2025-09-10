@@ -1,7 +1,17 @@
 package com.nymoo.afp;
 
+import com.nymoo.afp.common.entity.EntityExoskeleton;
+import com.nymoo.afp.common.item.ItemFusionCore;
+import com.nymoo.afp.common.util.UtilEntityExoskeleton;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
@@ -11,19 +21,6 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
-import com.nymoo.afp.common.entity.EntityExoskeleton;
-import com.nymoo.afp.common.item.IPowerArmor;
-import com.nymoo.afp.common.item.ItemFusionCore;
-import com.nymoo.afp.common.util.UtilEntityExoskeleton;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
 
 /**
  * Manages synchronization of mod-specific data between client and server.
@@ -31,6 +28,16 @@ import net.minecraft.world.World;
  * Also manages network messages for interactions with exoskeleton entities.
  */
 public class ModDataSyncManager {
+    /**
+     * Network wrapper for exoskeleton interaction messages.
+     * Registered in static initializer.
+     */
+    public static final SimpleNetworkWrapper INTERACT_NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel("afp_interact");
+
+    static {
+        INTERACT_NETWORK.registerMessage(InteractMessage.Handler.class, InteractMessage.class, 0, Side.SERVER);
+    }
+
     /**
      * Abstract base class for synchronized world data.
      * Provides methods to mark data dirty and sync across network.
@@ -46,6 +53,7 @@ public class ModDataSyncManager {
         /**
          * Synchronizes the data across the network.
          * If on client, sends to server; if on server, broadcasts to all or dimension.
+         *
          * @param world The world context for synchronization.
          */
         public void syncData(World world) {
@@ -68,12 +76,18 @@ public class ModDataSyncManager {
     public static class MapVariables extends SyncedWorldData {
         public static final String DATA_NAME = Tags.MOD_ID + "_map";
 
+        // Конструктор, который ожидает Minecraft при загрузке данных
+        public MapVariables(String mapName) {
+            super(mapName, 0);
+        }
+
         public MapVariables() {
             super(DATA_NAME, 0);
         }
 
         /**
          * Retrieves or creates the MapVariables instance for the world.
+         *
          * @param world The world to get variables for.
          * @return The MapVariables instance.
          */
@@ -102,12 +116,18 @@ public class ModDataSyncManager {
     public static class WorldVariables extends SyncedWorldData {
         public static final String DATA_NAME = Tags.MOD_ID + "_world";
 
+        // Конструктор, который ожидает Minecraft при загрузке данных
+        public WorldVariables(String mapName) {
+            super(mapName, 1);
+        }
+
         public WorldVariables() {
             super(DATA_NAME, 1);
         }
 
         /**
          * Retrieves or creates the WorldVariables instance for the world.
+         *
          * @param world The world to get variables for.
          * @return The WorldVariables instance.
          */
@@ -149,6 +169,7 @@ public class ModDataSyncManager {
         /**
          * Synchronizes the received data.
          * On server, marks dirty and broadcasts; on client, sets data.
+         *
          * @param message The sync message.
          * @param context The message context.
          */
@@ -196,19 +217,13 @@ public class ModDataSyncManager {
         public void fromBytes(io.netty.buffer.ByteBuf buf) {
             type = buf.readInt();
             NBTTagCompound nbt = ByteBufUtils.readTag(buf);
-            data = type == 0 ? new MapVariables() : new WorldVariables();
+            if (type == 0) {
+                data = new MapVariables();
+            } else {
+                data = new WorldVariables();
+            }
             data.readFromNBT(nbt);
         }
-    }
-
-    /**
-     * Network wrapper for exoskeleton interaction messages.
-     * Registered in static initializer.
-     */
-    public static final SimpleNetworkWrapper INTERACT_NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel("afp_interact");
-
-    static {
-        INTERACT_NETWORK.registerMessage(InteractMessage.Handler.class, InteractMessage.class, 0, Side.SERVER);
     }
 
     /**
@@ -220,7 +235,8 @@ public class ModDataSyncManager {
         private int entityId;
         private EntityEquipmentSlot slot;
 
-        public InteractMessage() {}
+        public InteractMessage() {
+        }
 
         public InteractMessage(int type, int entityId, EntityEquipmentSlot slot) {
             this.type = type;
@@ -268,10 +284,11 @@ public class ModDataSyncManager {
                             ItemStack held = player.getHeldItem(EnumHand.MAIN_HAND);
                             ItemStack chest = exo.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
                             NBTTagCompound tag = chest.getTagCompound();
-                            boolean hasEnergy = tag != null && tag.hasKey("fusion_energy");
+                            boolean hasEnergy = tag != null && tag.hasKey("fusion_depletion");
 
                             if (message.type == 0) {
-                                if (held.isEmpty() || held.getItem() != ItemFusionCore.itemFusionCore || hasEnergy) return;
+                                if (held.isEmpty() || held.getItem() != ItemFusionCore.itemFusionCore || hasEnergy)
+                                    return;
                                 UtilEntityExoskeleton.tryInstallFusionCore(world, player, EnumHand.MAIN_HAND, exo, message.slot);
                             } else if (message.type == 1) {
                                 if (!held.isEmpty() || !hasEnergy) return;

@@ -41,3 +41,6 @@ itemGroup.tabequipment=Equipment
 
 key.category.afp=Atom: Fusion Protocol
 key.afp.exit_power_armor=Exit Power Armor
+
+tooltip.afp.fusion_core.description=A mini-reactor to provide energy for the power armor
+tooltip.afp.fusion_core.depletion=Depletion: %d%%
