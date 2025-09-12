@@ -160,9 +160,7 @@ public class ArmorExo extends ModElementRegistry.ModElement {
         @Override
         public void onArmorTick(World world, EntityPlayer player, ItemStack itemStack) {
             UtilPowerArmor.handleStepSound(world, player);
-            if (AtomFusionProtocol.IS_HBM_LOADED) {
-                ItemGeigerCounter.playGeiger(world, player);
-            }
+            UtilPowerArmor.handleEnergyDepletion(world, player, itemStack);
         }
     }
 

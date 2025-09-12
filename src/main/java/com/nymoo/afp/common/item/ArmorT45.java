@@ -184,6 +184,7 @@ public class ArmorT45 extends ModElementRegistry.ModElement {
             if (AtomFusionProtocol.IS_HBM_LOADED) {
                 ItemGeigerCounter.playGeiger(world, player);
             }
+            UtilPowerArmor.handleEnergyDepletion(world, player, itemStack);
         }
     }
 
