@@ -60,12 +60,16 @@ public class UtilPowerArmor {
         if (world.isRemote) {
             return;
         }
+
         NBTTagCompound nbt = itemStack.getTagCompound();
         if (nbt == null) {
             nbt = new NBTTagCompound();
             itemStack.setTagCompound(nbt);
         }
         float currentDepletion = nbt.getFloat("fusion_depletion");
+        if (!nbt.hasKey("fusion_depletion")) {
+            return;
+        }
         if (currentDepletion >= AFPConfig.maxDepletion) {
         // Max depletion reached; no further processing
             return;
@@ -110,6 +114,7 @@ public class UtilPowerArmor {
             currentDepletion = AFPConfig.maxDepletion;
         }
         nbt.setFloat("fusion_depletion", currentDepletion);
+
         // Update previous step modified for next tick
         nbt.setFloat("prev_step_modified", distanceWalkedOnStepModified);
     }
