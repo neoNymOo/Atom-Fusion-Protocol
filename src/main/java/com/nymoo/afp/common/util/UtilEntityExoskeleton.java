@@ -20,6 +20,7 @@ import java.util.EnumSet;
  * Utility class for exoskeleton entity operations.
  * Provides methods for installing/uninstalling parts, fusion cores, entering/exiting.
  * Called from event handlers and network message handlers.
+ * Extended with methods for installing/uninstalling fusion cores on other players' chestplates.
  */
 public class UtilEntityExoskeleton {
     public static final SoundEvent EXO_CLICK_SOUND;
@@ -247,6 +248,62 @@ public class UtilEntityExoskeleton {
         player.setHeldItem(EnumHand.MAIN_HAND, newCore);
         chestTag.removeTag("fusion_depletion");
         world.playSound(null, entity.posX, entity.posY, entity.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+    }
+
+    /**
+     * Attempts to install a fusion core into another player's chestplate.
+     * Transfers energy and plays sound at the target's position.
+     *
+     * @param world  The world.
+     * @param player The interacting player.
+     * @param hand   The hand.
+     * @param target The target player.
+     */
+    public static void tryInstallFusionCoreOnPlayer(World world, EntityPlayer player, EnumHand hand, EntityPlayer target) {
+        ItemStack chestplate = target.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+        if (chestplate.isEmpty()) return;
+        ItemStack heldStack = player.getHeldItem(hand);
+        if (heldStack.isEmpty() || heldStack.getItem() != ItemFusionCore.itemFusionCore) return;
+        float energy = 0;
+        NBTTagCompound heldTag = heldStack.getTagCompound();
+        if (heldTag != null && heldTag.hasKey("fusion_depletion")) {
+            energy = heldTag.getFloat("fusion_depletion");
+        }
+        NBTTagCompound chestTag = chestplate.getTagCompound();
+        if (chestTag == null) {
+            chestTag = new NBTTagCompound();
+            chestplate.setTagCompound(chestTag);
+        }
+        chestTag.setFloat("fusion_depletion", energy);
+        heldStack.shrink(1);
+        if (heldStack.isEmpty()) {
+            player.setHeldItem(hand, ItemStack.EMPTY);
+        }
+        world.playSound(null, target.posX, target.posY, target.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+    }
+
+    /**
+     * Attempts to uninstall a fusion core from another player's chestplate.
+     * Creates new core item, gives to player, and plays sound at the target's position.
+     *
+     * @param world  The world.
+     * @param player The interacting player.
+     * @param hand   The hand.
+     * @param target The target player.
+     */
+    public static void tryUninstallFusionCoreFromPlayer(World world, EntityPlayer player, EnumHand hand, EntityPlayer target) {
+        ItemStack chestplate = target.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+        if (chestplate.isEmpty()) return;
+        NBTTagCompound chestTag = chestplate.getTagCompound();
+        if (chestTag == null) return;
+        float energy = chestTag.getFloat("fusion_depletion");
+        ItemStack newCore = new ItemStack(ItemFusionCore.itemFusionCore);
+        NBTTagCompound newTag = new NBTTagCompound();
+        newTag.setFloat("fusion_depletion", energy);
+        newCore.setTagCompound(newTag);
+        player.setHeldItem(EnumHand.MAIN_HAND, newCore);
+        chestTag.removeTag("fusion_depletion");
+        world.playSound(null, target.posX, target.posY, target.posZ, EXO_CLICK_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
     }
 
     /**

@@ -10,32 +10,38 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * Handles rendering of the game overlay, specifically the progress bar for hold actions.
- * Interacts with HandlerClientTickEvent to get hold progress.
+ * Handles rendering of game overlays, specifically the progress bar for hold actions and fade effects.
+ * Integrates with HandlerClientTickEvent for hold progress and fade timing.
  */
 @Mod.EventBusSubscriber
 public class HandlerRenderGameOverlayEvent {
 
-    // Reusable StringBuilder for building the loading bar string to minimize allocations
+    // Reusable StringBuilder for building the loading bar to reduce allocations
     private static final StringBuilder LOADING_BAR_BUILDER = new StringBuilder(16);
 
     /**
-     * Event handler for rendering the game overlay.
-     * Checks if a hold action is in progress and renders the progress bar if applicable.
+     * Handles rendering the game overlay.
+     * Renders progress bar if hold action is in progress and fade effect if active.
      *
      * @param event The render event.
      */
     @SubscribeEvent
-    public static void onRenderGameOverlayEvent(RenderGameOverlayEvent.Post event) {
-        if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) return;
+    public static void onRenderGameOverlay(RenderGameOverlayEvent.Post event) {
+        if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) {
+            return;
+        }
 
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc == null) return;
+        if (mc == null) {
+            return;
+        }
 
-        // Only render in first-person view
-        if (mc.gameSettings.thirdPersonView != 0) return;
+        // Render only in first-person view
+        if (mc.gameSettings.thirdPersonView != 0) {
+            return;
+        }
 
-        ScaledResolution sr = new ScaledResolution(mc);
+        ScaledResolution scaledRes = new ScaledResolution(mc);
 
         // Render hold progress bar if active
         if (HandlerClientTickEvent.startHoldTime != 0L) {
@@ -43,8 +49,8 @@ public class HandlerRenderGameOverlayEvent {
             float elapsed = (now - HandlerClientTickEvent.startHoldTime) / 1000.0F;
             float progress = Math.min(elapsed / HandlerClientTickEvent.currentMaxHoldTime, 1.0F);
 
-            if (progress < 1.0F && progress > 0.0F) {
-                drawLoadingBar(event, progress, mc, sr);
+            if (progress > 0.0F && progress < 1.0F) {
+                drawProgressBar(progress, mc, scaledRes);
             }
         }
 
@@ -52,44 +58,41 @@ public class HandlerRenderGameOverlayEvent {
         if (HandlerClientTickEvent.fadeStartTime != 0L) {
             long now = System.currentTimeMillis();
             if (now < HandlerClientTickEvent.fadeStartTime) {
-                return; // Delay not over yet
+                return; // Delay not elapsed
             }
+
             float elapsed = (now - HandlerClientTickEvent.fadeStartTime) / 1000.0F;
             float totalInHold = HandlerClientTickEvent.FADE_DURATION_IN + HandlerClientTickEvent.FADE_HOLD;
-            float total = totalInHold + HandlerClientTickEvent.FADE_DURATION_OUT;
+            float totalDuration = totalInHold + HandlerClientTickEvent.FADE_DURATION_OUT;
 
-            if (elapsed >= total) {
+            if (elapsed >= totalDuration) {
                 HandlerClientTickEvent.fadeStartTime = 0L;
                 return;
             }
 
-            float alpha = 0f;
+            float alpha;
             if (elapsed < HandlerClientTickEvent.FADE_DURATION_IN) {
                 alpha = elapsed / HandlerClientTickEvent.FADE_DURATION_IN;
             } else if (elapsed < totalInHold) {
-                alpha = 1f;
+                alpha = 1.0F;
             } else {
-                alpha = 1f - (elapsed - totalInHold) / HandlerClientTickEvent.FADE_DURATION_OUT;
+                alpha = 1.0F - (elapsed - totalInHold) / HandlerClientTickEvent.FADE_DURATION_OUT;
             }
 
-            drawFadeOverlay(alpha, mc, sr);
+            drawFade(alpha, mc, scaledRes);
         }
     }
 
     /**
-     * Draws the loading bar on the screen.
-     * Uses special characters for filled and empty segments.
+     * Draws the progress bar on screen using special characters for segments.
      *
-     * @param event    The render event.
-     * @param progress The current progress (0.0 to 1.0).
-     * @param mc       The Minecraft instance.
-     * @param sr       The scaled resolution.
+     * @param progress Current progress (0.0 to 1.0).
+     * @param mc The Minecraft instance.
+     * @param scaledRes The scaled resolution.
      */
-    private static void drawLoadingBar(RenderGameOverlayEvent.Post event, float progress, Minecraft mc, ScaledResolution sr) {
-        if (progress <= 0.0F) return;
-
-        int centerX = sr.getScaledWidth() / 2;
-        int centerY = sr.getScaledHeight() / 2;
+    private static void drawProgressBar(float progress, Minecraft mc, ScaledResolution scaledRes) {
+        int centerX = scaledRes.getScaledWidth() / 2;
+        int centerY = scaledRes.getScaledHeight() / 2;
 
         final String filledChar = "▮";
         final String emptyChar = "▯";
@@ -105,24 +108,22 @@ public class HandlerRenderGameOverlayEvent {
         for (int i = filledSegments; i < totalSegments; i++) {
             LOADING_BAR_BUILDER.append(emptyChar);
         }
-        String text = LOADING_BAR_BUILDER.toString();
+        String barText = LOADING_BAR_BUILDER.toString();
 
-        int width = mc.fontRenderer.getStringWidth(text);
-        int x = centerX - width / 2;
+        int textWidth = mc.fontRenderer.getStringWidth(barText);
+        int x = centerX - textWidth / 2;
         int y = centerY + 4;
 
         GlStateManager.enableBlend();
-
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR,
                 GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR,
                 GlStateManager.SourceFactor.ONE,
                 GlStateManager.DestFactor.ZERO
         );
-
         GlStateManager.enableAlpha();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        mc.fontRenderer.drawString(text, x, y, 0xFFFFFF);
+        mc.fontRenderer.drawString(barText, x, y, 0xFFFFFF);
 
         GlStateManager.tryBlendFuncSeparate(
                 GlStateManager.SourceFactor.SRC_ALPHA,
@@ -130,37 +131,43 @@ public class HandlerRenderGameOverlayEvent {
                 GlStateManager.SourceFactor.ONE,
                 GlStateManager.DestFactor.ZERO
         );
-
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     /**
-     * Draws a black fade overlay on the screen with the given alpha.
+     * Draws a black fade overlay with specified alpha.
      *
-     * @param alpha The opacity of the overlay (0.0 to 1.0).
-     * @param mc    The Minecraft instance.
-     * @param sr    The scaled resolution.
+     * @param alpha Opacity (0.0 to 1.0).
+     * @param mc The Minecraft instance.
+     * @param scaledRes The scaled resolution.
      */
-    private static void drawFadeOverlay(float alpha, Minecraft mc, ScaledResolution sr) {
-        if (alpha <= 0.0F) return;
+    private static void drawFade(float alpha, Minecraft mc, ScaledResolution scaledRes) {
+        if (alpha <= 0.0F) {
+            return;
+        }
 
         GlStateManager.disableDepth();
         GlStateManager.depthMask(false);
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        GlStateManager.tryBlendFuncSeparate(
+                GlStateManager.SourceFactor.SRC_ALPHA,
+                GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE,
+                GlStateManager.DestFactor.ZERO
+        );
         GlStateManager.color(0.0F, 0.0F, 0.0F, alpha);
         GlStateManager.disableTexture2D();
 
-        int width = sr.getScaledWidth();
-        int height = sr.getScaledHeight();
+        int width = scaledRes.getScaledWidth();
+        int height = scaledRes.getScaledHeight();
 
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        BufferBuilder buffer = tessellator.getBuffer();
 
-        bufferbuilder.begin(7, net.minecraft.client.renderer.vertex.DefaultVertexFormats.POSITION);
-        bufferbuilder.pos(0.0D, height, -90.0D).endVertex();
-        bufferbuilder.pos(width, height, -90.0D).endVertex();
-        bufferbuilder.pos(width, 0.0D, -90.0D).endVertex();
-        bufferbuilder.pos(0.0D, 0.0D, -90.0D).endVertex();
+        buffer.begin(7, net.minecraft.client.renderer.vertex.DefaultVertexFormats.POSITION);
+        buffer.pos(0.0D, height, -90.0D).endVertex();
+        buffer.pos(width, height, -90.0D).endVertex();
+        buffer.pos(width, 0.0D, -90.0D).endVertex();
+        buffer.pos(0.0D, 0.0D, -90.0D).endVertex();
         tessellator.draw();
 
         GlStateManager.depthMask(true);

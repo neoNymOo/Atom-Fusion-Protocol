@@ -6,6 +6,7 @@ import com.nymoo.afp.common.util.UtilEntityExoskeleton;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
@@ -26,6 +27,7 @@ import net.minecraftforge.fml.relauncher.Side;
  * Manages synchronization of mod-specific data between client and server.
  * Handles world saved data for map-wide and dimension-specific variables.
  * Also manages network messages for interactions with exoskeleton entities.
+ * Extended to support interactions with other players for fusion core operations.
  */
 public class ModDataSyncManager {
     /**
@@ -262,6 +264,7 @@ public class ModDataSyncManager {
         /**
          * Handler for interaction messages on server.
          * Validates conditions and calls appropriate UtilEntityExoskeleton methods.
+         * Supports both exoskeleton entities and other players for fusion core actions.
          */
         public static class Handler implements IMessageHandler<InteractMessage, IMessage> {
             @Override
@@ -269,35 +272,68 @@ public class ModDataSyncManager {
                 EntityPlayerMP player = ctx.getServerHandler().player;
                 player.getServerWorld().addScheduledTask(() -> {
                     World world = player.world;
-                    if (message.type == 0 || message.type == 1 || message.type == 2) {
-                        Entity entity = world.getEntityByID(message.entityId);
-                        if (!(entity instanceof EntityExoskeleton.Exoskeleton)) return;
+                    Entity entity = world.getEntityByID(message.entityId);
+                    if (entity == null) {
+                        return;
+                    }
 
+                    double distanceSq = player.getDistanceSq(entity);
+                    if (distanceSq > 1.0D) {
+                        return;
+                    }
+
+                    float yawDiff = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
+                    if (yawDiff < -55.0F || yawDiff > 55.0F) {
+                        return;
+                    }
+
+                    ItemStack heldItem = player.getHeldItem(EnumHand.MAIN_HAND);
+                    if (entity instanceof EntityExoskeleton.Exoskeleton) {
                         EntityExoskeleton.Exoskeleton exo = (EntityExoskeleton.Exoskeleton) entity;
-                        double distanceSq = player.getDistanceSq(exo);
-                        if (distanceSq > 1.0D) return;
-
-                        float yawDiff = MathHelper.wrapDegrees(player.rotationYaw - exo.rotationYaw);
-                        if (yawDiff < -55.0F || yawDiff > 55.0F) return;
-
                         if (message.type == 0 || message.type == 1) {
-                            ItemStack held = player.getHeldItem(EnumHand.MAIN_HAND);
                             ItemStack chest = exo.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
                             NBTTagCompound tag = chest.getTagCompound();
                             boolean hasEnergy = tag != null && tag.hasKey("fusion_depletion");
 
                             if (message.type == 0) {
-                                if (held.isEmpty() || held.getItem() != ItemFusionCore.itemFusionCore || hasEnergy)
+                                if (heldItem.isEmpty() || heldItem.getItem() != ItemFusionCore.itemFusionCore || hasEnergy) {
                                     return;
+                                }
                                 UtilEntityExoskeleton.tryInstallFusionCore(world, player, EnumHand.MAIN_HAND, exo, message.slot);
                             } else if (message.type == 1) {
-                                if (!held.isEmpty() || !hasEnergy) return;
+                                if (!heldItem.isEmpty() || !hasEnergy) {
+                                    return;
+                                }
                                 UtilEntityExoskeleton.tryUninstallFusionCore(world, player, EnumHand.MAIN_HAND, exo, message.slot);
                             }
                         } else if (message.type == 2) {
-                            ItemStack held = player.getHeldItem(EnumHand.MAIN_HAND);
-                            if (!held.isEmpty()) return;
+                            if (!heldItem.isEmpty()) {
+                                return;
+                            }
                             UtilEntityExoskeleton.tryEnterExoskeleton(world, player, exo);
+                        }
+                    } else if (entity instanceof EntityPlayer && entity != player && (message.type == 0 || message.type == 1)) {
+                        EntityPlayer target = (EntityPlayer) entity;
+                        ItemStack chest = target.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+                        if (chest.isEmpty() || !(chest.getItem() instanceof com.nymoo.afp.common.item.IPowerArmor)) {
+                            return;
+                        }
+                        if (message.slot != EntityEquipmentSlot.CHEST) {
+                            return;
+                        }
+                        NBTTagCompound tag = chest.getTagCompound();
+                        boolean hasEnergy = tag != null && tag.hasKey("fusion_depletion");
+
+                        if (message.type == 0) {
+                            if (heldItem.isEmpty() || heldItem.getItem() != ItemFusionCore.itemFusionCore || hasEnergy) {
+                                return;
+                            }
+                            UtilEntityExoskeleton.tryInstallFusionCoreOnPlayer(world, player, EnumHand.MAIN_HAND, target);
+                        } else if (message.type == 1) {
+                            if (!heldItem.isEmpty() || !hasEnergy) {
+                                return;
+                            }
+                            UtilEntityExoskeleton.tryUninstallFusionCoreFromPlayer(world, player, EnumHand.MAIN_HAND, target);
                         }
                     }
                 });
