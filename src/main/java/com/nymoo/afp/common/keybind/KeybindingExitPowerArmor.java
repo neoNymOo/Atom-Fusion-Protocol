@@ -17,12 +17,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 
 /**
- * Класс регистрирует и обрабатывает клавишу для выхода из силовой брони.
- * Отправляет сообщение на сервер при нажатии.
+ * Элемент мода для регистрации и обработки клавиши выхода из силовой брони.
+ * Управляет привязкой клавиши и отправкой сетевых сообщений при нажатии.
  */
 @ModElementRegistry.ModElement.Tag
 public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
-    // Клавиша выхода.
+    /**
+     * Привязка клавиши для выхода из силовой брони
+     */
     public static KeyBinding keys;
 
     public KeybindingExitPowerArmor(ModElementRegistry instance) {
@@ -34,6 +36,12 @@ public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
         elements.addNetworkMessage(KeyBindingPressedMessageHandler.class, KeyBindingPressedMessage.class, Side.SERVER);
     }
 
+    /**
+     * Инициализирует привязку клавиши на клиентской стороне.
+     * Регистрирует клавишу K по умолчанию для выхода из силовой брони.
+     *
+     * @param event Событие инициализации
+     */
     @SideOnly(Side.CLIENT)
     @Override
     public void init(FMLInitializationEvent event) {
@@ -43,19 +51,22 @@ public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
     }
 
     /**
-     * Сообщение о нажатии клавиши.
+     * Сетевое сообщение о нажатии клавиши выхода из силовой брони.
+     * Не содержит данных, так как служит только триггером.
      */
     public static class KeyBindingPressedMessage implements IMessage {
         @Override
-        public void toBytes(ByteBuf buf) {}
+        public void toBytes(ByteBuf buf) {
+        }
 
         @Override
-        public void fromBytes(ByteBuf buf) {}
+        public void fromBytes(ByteBuf buf) {
+        }
     }
 
     /**
-     * Обработчик сообщения на сервере.
-     * Вызывает выход из экзоскелета.
+     * Обработчик сетевого сообщения на стороне сервера.
+     * Вызывает процедуру выхода из экзоскелета для игрока.
      */
     public static class KeyBindingPressedMessageHandler implements IMessageHandler<KeyBindingPressedMessage, IMessage> {
         @Override

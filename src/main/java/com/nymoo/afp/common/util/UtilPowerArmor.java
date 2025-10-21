@@ -1,4 +1,5 @@
 package com.nymoo.afp.common.util;
+
 import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.mixin.impl.EntityAccessor;
 import net.minecraft.block.material.Material;
@@ -12,37 +13,55 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-public class UtilPowerArmor {
-    /**
 
-     Plays a servo step sound if the player is on ground and a step threshold is crossed.
+/**
+ * Утилитарный класс для управления звуками шагов и энергопотреблением силовой брони.
+ * Содержит методы для воспроизведения звуков сервоприводов и расчета расхода энергии.
+ */
+public class UtilPowerArmor {
+
+    /**
+     * Обрабатывает воспроизведение звуков шагов сервоприводов силовой брони.
+     * Определяет момент шага и воспроизводит случайный звук сервопривода.
+     *
+     * @param world  Мир, в котором находится игрок
+     * @param player Игрок в силовой броне
      */
     public static void handleStepSound(World world, EntityPlayer player) {
         if (!AFPConfig.playServoStepSound || world.isRemote || !player.onGround) {
             return;
         }
-        EntityAccessor acc = (EntityAccessor) player;
-        float nextStepDistance = acc.getNextStepDistance();
-        float distanceWalkedOnStepModified = acc.getDistanceWalkedOnStepModified();
-        NBTTagCompound data = player.getEntityData();
-        float lastStepDistance = data.getFloat("afp_nextStepDistance");
+
+        EntityAccessor accessor = (EntityAccessor) player;
+        float nextStepDistance = accessor.getNextStepDistance();
+        float distanceWalkedOnStepModified = accessor.getDistanceWalkedOnStepModified();
+        NBTTagCompound entityData = player.getEntityData();
+        float lastStepDistance = entityData.getFloat("afp_nextStepDistance");
+
         if (lastStepDistance == 0) {
-        // Initialize on first call
-            data.setFloat("afp_nextStepDistance", nextStepDistance);
+            entityData.setFloat("afp_nextStepDistance", nextStepDistance);
             return;
         }
-        // Get block under feet
-        BlockPos posUnder = new BlockPos(MathHelper.floor(player.posX), MathHelper.floor(player.posY - 0.2D), MathHelper.floor(player.posZ));
-        IBlockState block = world.getBlockState(posUnder);
-        // Play sound if step threshold crossed and not on air
-        if (block.getMaterial() != Material.AIR && lastStepDistance <= distanceWalkedOnStepModified) {
+
+        BlockPos positionUnderPlayer = new BlockPos(MathHelper.floor(player.posX), MathHelper.floor(player.posY - 0.2D), MathHelper.floor(player.posZ));
+        IBlockState blockState = world.getBlockState(positionUnderPlayer);
+
+        if (blockState.getMaterial() != Material.AIR && lastStepDistance <= distanceWalkedOnStepModified) {
             playServoStepSound(world, player.posX, player.posY, player.posZ);
         }
-        // Update stored threshold
-        data.setFloat("afp_nextStepDistance", nextStepDistance);
+
+        entityData.setFloat("afp_nextStepDistance", nextStepDistance);
     }
 
-    // Plays a random servo step sound
+    /**
+     * Воспроизводит случайный звук шага сервопривода в указанных координатах.
+     * Выбирает один из трех доступных звуков шага с заданной громкостью.
+     *
+     * @param world Мир для воспроизведения звука
+     * @param x     Координата X воспроизведения звука
+     * @param y     Координата Y воспроизведения звука
+     * @param z     Координата Z воспроизведения звука
+     */
     public static void playServoStepSound(World world, double x, double y, double z) {
         SoundEvent[] servoSounds = {
                 SoundEvent.REGISTRY.getObject(new ResourceLocation("afp:servo_step1")),
@@ -52,70 +71,76 @@ public class UtilPowerArmor {
         int soundIndex = (int) (Math.random() * servoSounds.length);
         world.playSound(null, x, y, z, servoSounds[soundIndex], SoundCategory.PLAYERS, AFPConfig.servoVolume, 1.0f);
     }
-    /**
 
-     Handles energy depletion logic for power armor based on player actions.
+    /**
+     * Обрабатывает логику расхода энергии силовой брони на основе действий игрока.
+     * Учитывает различные факторы: бег, прыжки, нахождение в воде, использование предметов и т.д.
+     *
+     * @param world     Мир, в котором находится игрок
+     * @param player    Игрок в силовой броне
+     * @param itemStack Предмет силовой брони для обновления уровня энергии
      */
     public static void handleEnergyDepletion(World world, EntityPlayer player, ItemStack itemStack) {
         if (world.isRemote) {
             return;
         }
 
-        NBTTagCompound nbt = itemStack.getTagCompound();
-        if (nbt == null) {
-            nbt = new NBTTagCompound();
-            itemStack.setTagCompound(nbt);
+        NBTTagCompound tagCompound = itemStack.getTagCompound();
+        if (tagCompound == null) {
+            tagCompound = new NBTTagCompound();
+            itemStack.setTagCompound(tagCompound);
         }
-        float currentDepletion = nbt.getFloat("fusion_depletion");
-        if (!nbt.hasKey("fusion_depletion")) {
+
+        float currentDepletion = tagCompound.getFloat("fusion_depletion");
+        if (!tagCompound.hasKey("fusion_depletion")) {
             return;
         }
+
         if (currentDepletion >= AFPConfig.maxDepletion) {
-        // Max depletion reached; no further processing
             return;
         }
-        EntityAccessor acc = (EntityAccessor) player;
-        float distanceWalkedOnStepModified = acc.getDistanceWalkedOnStepModified();
-        float prevStepModified = nbt.getFloat("prev_step_modified");
-        float rate = AFPConfig.baseDepletionRate;
-        // Sprinting
+
+        EntityAccessor accessor = (EntityAccessor) player;
+        float distanceWalkedOnStepModified = accessor.getDistanceWalkedOnStepModified();
+        float previousStepModified = tagCompound.getFloat("prev_step_modified");
+        float depletionRate = AFPConfig.baseDepletionRate;
+
         if (player.isSprinting()) {
-            rate += AFPConfig.sprintDepletionAdder;
+            depletionRate += AFPConfig.sprintDepletionAdder;
         }
-        // Jumping (without jetpack)
-        boolean hasJetpack = nbt.getBoolean("jetpack");
+
+        boolean hasJetpack = tagCompound.getBoolean("jetpack");
         if (!player.onGround && player.motionY > 0.0D && !hasJetpack) {
-            rate += AFPConfig.jumpDepletionAdder;
+            depletionRate += AFPConfig.jumpDepletionAdder;
         }
-        // In water
+
         if (player.isInWater()) {
-            rate += AFPConfig.waterDepletionAdder;
+            depletionRate += AFPConfig.waterDepletionAdder;
         }
-        // Using item or swinging (attack)
+
         if (player.isHandActive() || player.isSwingInProgress) {
-            rate += AFPConfig.useItemDepletionAdder;
+            depletionRate += AFPConfig.useItemDepletionAdder;
         }
-        // Recent hurt or attack
+
         if (player.hurtTime > 0 || (player.ticksExisted - player.getLastAttackedEntityTime() < 20)) {
-            rate += AFPConfig.hurtDepletionAdder;
+            depletionRate += AFPConfig.hurtDepletionAdder;
         }
-        // Jetpack operation
+
         if (hasJetpack) {
-            rate += AFPConfig.jetpackDepletionAdder;
+            depletionRate += AFPConfig.jetpackDepletionAdder;
         }
-        // Horizontal ground movement (non-sprinting) using step fields
-        float stepDelta = distanceWalkedOnStepModified - prevStepModified;
+
+        float stepDelta = distanceWalkedOnStepModified - previousStepModified;
         if (player.onGround && !player.isSprinting() && stepDelta > AFPConfig.stepDeltaThreshold) {
-            rate += AFPConfig.walkDepletionAdder;
+            depletionRate += AFPConfig.walkDepletionAdder;
         }
-        // Update depletion
-        currentDepletion += rate;
+
+        currentDepletion += depletionRate;
         if (currentDepletion > AFPConfig.maxDepletion) {
             currentDepletion = AFPConfig.maxDepletion;
         }
-        nbt.setFloat("fusion_depletion", currentDepletion);
 
-        // Update previous step modified for next tick
-        nbt.setFloat("prev_step_modified", distanceWalkedOnStepModified);
+        tagCompound.setFloat("fusion_depletion", currentDepletion);
+        tagCompound.setFloat("prev_step_modified", distanceWalkedOnStepModified);
     }
 }

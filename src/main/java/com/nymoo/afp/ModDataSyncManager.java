@@ -31,15 +31,12 @@ import net.minecraftforge.fml.relauncher.Side;
 import java.util.List;
 
 /**
- * Управляет синхронизацией мод-специфических данных между клиентом и сервером.
- * Обрабатывает сохраненные данные мира для переменных уровня карты и измерения.
- * Также управляет сетевыми сообщениями для взаимодействий с сущностями экзоскелета.
- * Расширен для поддержки взаимодействий с другими игроками для операций с ядрами fusion.
+ * Менеджер синхронизации данных мода между клиентом и сервером.
+ * Управляет сетевыми сообщениями для взаимодействий с экзоскелетом и ядрами синтеза.
  */
 public class ModDataSyncManager {
     /**
-     * Обертка сети для сообщений взаимодействия с экзоскелетом.
-     * Регистрируется в статическом инициализаторе.
+     * Сетевой канал для взаимодействий с экзоскелетом
      */
     public static final SimpleNetworkWrapper INTERACT_NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel("afp_interact");
 
@@ -51,10 +48,12 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Абстрактный базовый класс для синхронизированных данных мира.
-     * Предоставляет методы для пометки данных как грязных и синхронизации по сети.
+     * Абстрактный класс для синхронизированных данных мира с поддержкой сетевой синхронизации.
      */
     public static abstract class SyncedWorldData extends WorldSavedData {
+        /**
+         * Тип данных: 0 - уровень карты, 1 - уровень измерения
+         */
         private final int type;
 
         public SyncedWorldData(String name, int type) {
@@ -63,10 +62,9 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Синхронизирует данные по сети.
-         * Если на клиенте, отправляет на сервер; если на сервере, рассылает всем или в измерение.
+         * Синхронизирует данные по сети между клиентом и сервером.
          *
-         * @param world Контекст мира для синхронизации.
+         * @param world Мир для синхронизации данных
          */
         public void syncData(World world) {
             markDirty();
@@ -83,12 +81,14 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Переменные уровня карты, синхронизируемые по всем измерениям.
+     * Данные уровня карты, синхронизируемые между всеми измерениями.
      */
     public static class MapVariables extends SyncedWorldData {
+        /**
+         * Имя данных для хранения в мире
+         */
         public static final String DATA_NAME = Tags.MOD_ID + "_map";
 
-        // Конструктор, ожидаемый Minecraft при загрузке данных
         public MapVariables(String mapName) {
             super(mapName, 0);
         }
@@ -98,10 +98,10 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Получает или создает экземпляр MapVariables для мира.
+         * Получает или создает экземпляр данных уровня карты для мира.
          *
-         * @param world Мир, для которого получить переменные.
-         * @return Экземпляр MapVariables.
+         * @param world Мир для получения данных
+         * @return Экземпляр MapVariables
          */
         public static MapVariables get(World world) {
             MapVariables instance = (MapVariables) world.getMapStorage().getOrLoadData(MapVariables.class, DATA_NAME);
@@ -114,23 +114,25 @@ public class ModDataSyncManager {
 
         @Override
         public void readFromNBT(NBTTagCompound nbt) {
-            // Здесь можно добавить чтение специфических данных, если нужно
+            // Реализация чтения данных из NBT
         }
 
         @Override
         public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-            // Здесь можно добавить запись специфических данных, если нужно
+            // Реализация записи данных в NBT
             return nbt;
         }
     }
 
     /**
-     * Переменные специфичные для измерения, синхронизируемые в пределах измерения.
+     * Данные уровня измерения, синхронизируемые в пределах одного измерения.
      */
     public static class WorldVariables extends SyncedWorldData {
+        /**
+         * Имя данных для хранения в мире
+         */
         public static final String DATA_NAME = Tags.MOD_ID + "_world";
 
-        // Конструктор, ожидаемый Minecraft при загрузке данных
         public WorldVariables(String mapName) {
             super(mapName, 1);
         }
@@ -140,10 +142,10 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Получает или создает экземпляр WorldVariables для мира.
+         * Получает или создает экземпляр данных уровня измерения для мира.
          *
-         * @param world Мир, для которого получить переменные.
-         * @return Экземпляр WorldVariables.
+         * @param world Мир для получения данных
+         * @return Экземпляр WorldVariables
          */
         public static WorldVariables get(World world) {
             WorldVariables instance = (WorldVariables) world.getMapStorage().getOrLoadData(WorldVariables.class, DATA_NAME);
@@ -156,19 +158,18 @@ public class ModDataSyncManager {
 
         @Override
         public void readFromNBT(NBTTagCompound nbt) {
-            // Здесь можно добавить чтение специфических данных, если нужно
+            // Реализация чтения данных из NBT
         }
 
         @Override
         public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-            // Здесь можно добавить запись специфических данных, если нужно
+            // Реализация записи данных в NBT
             return nbt;
         }
     }
 
     /**
-     * Обработчик сообщений синхронизации сохраненных данных мира.
-     * Обрабатывает сообщения на сторонах клиента и сервера.
+     * Обработчик сообщений синхронизации данных мира.
      */
     public static class WorldSavedDataSyncMessageHandler implements IMessageHandler<WorldSavedDataSyncMessage, IMessage> {
         @Override
@@ -183,11 +184,10 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Синхронизирует полученные данные.
-         * На сервере помечает грязными и рассылает; на клиенте устанавливает данные.
+         * Синхронизирует полученные данные в соответствующем мире.
          *
-         * @param message Сообщение синхронизации.
-         * @param context Контекст сообщения.
+         * @param message Сообщение с данными для синхронизации
+         * @param context Контекст сетевого сообщения
          */
         private void syncData(WorldSavedDataSyncMessage message, MessageContext context) {
             World world = context.side == Side.SERVER
@@ -209,10 +209,16 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Сетевое сообщение для синхронизации сохраненных данных мира.
+     * Сетевое сообщение для синхронизации данных мира между клиентом и сервером.
      */
     public static class WorldSavedDataSyncMessage implements IMessage {
+        /**
+         * Тип данных: 0 - уровень карты, 1 - уровень измерения
+         */
         public int type;
+        /**
+         * Синхронизируемые данные
+         */
         public WorldSavedData data;
 
         public WorldSavedDataSyncMessage() {
@@ -243,12 +249,21 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Сетевое сообщение для взаимодействий с экзоскелетом (установка/удаление ядер fusion, вход).
-     * Отправляется с клиента на сервер при завершении удержания.
+     * Сообщение взаимодействия с экзоскелетом или другим игроком.
+     * Используется для установки/извлечения ядер синтеза и входа в экзоскелет.
      */
     public static class InteractMessage implements IMessage {
+        /**
+         * Тип взаимодействия: 0 - установка ядра, 1 - извлечение ядра, 2 - вход в экзоскелет
+         */
         private int type;
+        /**
+         * ID целевой сущности
+         */
         private int entityId;
+        /**
+         * Целевой слот экипировки
+         */
         private EntityEquipmentSlot slot;
 
         public InteractMessage() {
@@ -276,9 +291,8 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Обработчик сообщений взаимодействий на сервере.
-         * Валидирует условия и вызывает соответствующие методы UtilEntityExoskeleton.
-         * Поддерживает как сущности экзоскелета, так и других игроков для действий с ядрами fusion.
+         * Обработчик сообщений взаимодействия на стороне сервера.
+         * Выполняет валидацию и вызывает соответствующие методы утилит.
          */
         public static class Handler implements IMessageHandler<InteractMessage, IMessage> {
             @Override
@@ -291,77 +305,115 @@ public class ModDataSyncManager {
                         return;
                     }
 
-                    // Валидация расстояния и поворота
-                    double distanceSq = player.getDistanceSq(entity);
-                    if (distanceSq > 1.0D) {
+                    double distanceSquared = player.getDistanceSq(entity);
+                    if (distanceSquared > 1.0D) {
                         return;
                     }
 
-                    float yawDiff = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
-                    if (yawDiff < -55.0F || yawDiff > 55.0F) {
+                    float yawDifference = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
+                    if (yawDifference < -55.0F || yawDifference > 55.0F) {
                         return;
                     }
 
                     ItemStack heldItem = player.getHeldItem(EnumHand.MAIN_HAND);
                     if (entity instanceof EntityExoskeleton.Exoskeleton) {
-                        EntityExoskeleton.Exoskeleton exo = (EntityExoskeleton.Exoskeleton) entity;
-                        ItemStack chest = exo.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-                        if (message.type == 0 || message.type == 1) {
-                            NBTTagCompound tag = chest.getTagCompound();
-                            boolean hasEnergy = tag != null && tag.hasKey("fusion_depletion");
-
-                            if (message.type == 0) {
-                                if (heldItem.isEmpty() || heldItem.getItem() != ItemFusionCore.itemFusionCore || hasEnergy) {
-                                    return;
-                                }
-                                UtilEntityExoskeleton.tryInstallFusionCore(world, player, EnumHand.MAIN_HAND, exo, message.slot);
-                            } else if (message.type == 1) {
-                                if (!heldItem.isEmpty() || !hasEnergy) {
-                                    return;
-                                }
-                                UtilEntityExoskeleton.tryUninstallFusionCore(world, player, EnumHand.MAIN_HAND, exo, message.slot);
-                            }
-                        } else if (message.type == 2) {
-                            if (!heldItem.isEmpty()) {
-                                return;
-                            }
-                            UtilEntityExoskeleton.tryEnterExoskeleton(world, player, exo);
-                        }
+                        handleExoskeletonInteraction(world, player, heldItem, (EntityExoskeleton.Exoskeleton) entity, message);
                     } else if (entity instanceof EntityPlayer && entity != player && (message.type == 0 || message.type == 1)) {
-                        EntityPlayer target = (EntityPlayer) entity;
-                        ItemStack chest = target.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-                        if (chest.isEmpty() || !(chest.getItem() instanceof IPowerArmor) || message.slot != EntityEquipmentSlot.CHEST) {
-                            return;
-                        }
-                        NBTTagCompound tag = chest.getTagCompound();
-                        boolean hasEnergy = tag != null && tag.hasKey("fusion_depletion");
-
-                        if (message.type == 0) {
-                            if (heldItem.isEmpty() || heldItem.getItem() != ItemFusionCore.itemFusionCore || hasEnergy) {
-                                return;
-                            }
-                            UtilEntityExoskeleton.tryInstallFusionCoreOnPlayer(world, player, EnumHand.MAIN_HAND, target);
-                        } else if (message.type == 1) {
-                            if (!heldItem.isEmpty() || !hasEnergy) {
-                                return;
-                            }
-                            UtilEntityExoskeleton.tryUninstallFusionCoreFromPlayer(world, player, EnumHand.MAIN_HAND, target);
-                        }
+                        handlePlayerInteraction(world, player, heldItem, (EntityPlayer) entity, message);
                     }
                 });
                 return null;
+            }
+
+            /**
+             * Обрабатывает взаимодействие с экзоскелетом.
+             *
+             * @param world       Мир, в котором происходит взаимодействие
+             * @param player      Игрок, выполняющий действие
+             * @param heldItem    Предмет в руке игрока
+             * @param exoskeleton Целевой экзоскелет
+             * @param message     Сообщение взаимодействия
+             */
+            private void handleExoskeletonInteraction(World world, EntityPlayerMP player, ItemStack heldItem,
+                                                      EntityExoskeleton.Exoskeleton exoskeleton, InteractMessage message) {
+                ItemStack chestStack = exoskeleton.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+                if (message.type == 0 || message.type == 1) {
+                    NBTTagCompound tagCompound = chestStack.getTagCompound();
+                    boolean hasEnergy = tagCompound != null && tagCompound.hasKey("fusion_depletion");
+
+                    if (message.type == 0) {
+                        if (heldItem.isEmpty() || heldItem.getItem() != ItemFusionCore.itemFusionCore || hasEnergy) {
+                            return;
+                        }
+                        UtilEntityExoskeleton.tryInstallFusionCore(world, player, EnumHand.MAIN_HAND, exoskeleton, message.slot);
+                    } else if (message.type == 1) {
+                        if (!heldItem.isEmpty() || !hasEnergy) {
+                            return;
+                        }
+                        UtilEntityExoskeleton.tryUninstallFusionCore(world, player, EnumHand.MAIN_HAND, exoskeleton, message.slot);
+                    }
+                } else if (message.type == 2) {
+                    if (!heldItem.isEmpty()) {
+                        return;
+                    }
+                    UtilEntityExoskeleton.tryEnterExoskeleton(world, player, exoskeleton);
+                }
+            }
+
+            /**
+             * Обрабатывает взаимодействие с другим игроком.
+             *
+             * @param world        Мир, в котором происходит взаимодействие
+             * @param player       Игрок, выполняющий действие
+             * @param heldItem     Предмет в руке игрока
+             * @param targetPlayer Целевой игрок
+             * @param message      Сообщение взаимодействия
+             */
+            private void handlePlayerInteraction(World world, EntityPlayerMP player, ItemStack heldItem,
+                                                 EntityPlayer targetPlayer, InteractMessage message) {
+                ItemStack chestStack = targetPlayer.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+                if (chestStack.isEmpty() || !(chestStack.getItem() instanceof IPowerArmor) || message.slot != EntityEquipmentSlot.CHEST) {
+                    return;
+                }
+
+                NBTTagCompound tagCompound = chestStack.getTagCompound();
+                boolean hasEnergy = tagCompound != null && tagCompound.hasKey("fusion_depletion");
+
+                if (message.type == 0) {
+                    if (heldItem.isEmpty() || heldItem.getItem() != ItemFusionCore.itemFusionCore || hasEnergy) {
+                        return;
+                    }
+                    UtilEntityExoskeleton.tryInstallFusionCoreOnPlayer(world, player, EnumHand.MAIN_HAND, targetPlayer);
+                } else if (message.type == 1) {
+                    if (!heldItem.isEmpty() || !hasEnergy) {
+                        return;
+                    }
+                    UtilEntityExoskeleton.tryUninstallFusionCoreFromPlayer(world, player, EnumHand.MAIN_HAND, targetPlayer);
+                }
             }
         }
     }
 
     /**
-     * Сетевое сообщение для начала воспроизведения звука на сервере (для других игроков).
-     * Отправляется с клиента на сервер при начале удержания.
+     * Сообщение для начала воспроизведения звука на сервере.
+     * Используется для синхронизации звуков взаимодействия между игроками.
      */
     public static class StartSoundMessage implements IMessage {
+        /**
+         * Режим действия для определения типа звука
+         */
         private int mode;
+        /**
+         * Координата X для позиционирования звука
+         */
         private double x;
+        /**
+         * Координата Y для позиционирования звука
+         */
         private double y;
+        /**
+         * Координата Z для позиционирования звука
+         */
         private double z;
 
         public StartSoundMessage() {
@@ -391,8 +443,8 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Обработчик сообщения на сервере.
-         * Воспроизводит звук для всех игроков кроме отправителя.
+         * Обработчик сообщения начала звука на стороне сервера.
+         * Воспроизводит звук для всех игроков в мире.
          */
         public static class Handler implements IMessageHandler<StartSoundMessage, IMessage> {
             @Override
@@ -400,10 +452,10 @@ public class ModDataSyncManager {
                 EntityPlayerMP player = ctx.getServerHandler().player;
                 player.getServerWorld().addScheduledTask(() -> {
                     String soundName = (message.mode == 0 || message.mode == 1) ? "fusion_core_in_out" : "power_armor_in_out";
-                    SoundEvent sound = ModElementRegistry.getSound(new ResourceLocation(Tags.MOD_ID, soundName));
-                    float volume = 1.0F; // Громкость по умолчанию, совпадает с клиентскими значениями
+                    SoundEvent soundEvent = ModElementRegistry.getSound(new ResourceLocation(Tags.MOD_ID, soundName));
+                    float volume = 1.0F;
                     World world = player.world;
-                    world.playSound(player, message.x, message.y, message.z, sound, SoundCategory.PLAYERS, volume, 1.0F);
+                    world.playSound(player, message.x, message.y, message.z, soundEvent, SoundCategory.PLAYERS, volume, 1.0F);
                 });
                 return null;
             }
@@ -411,13 +463,25 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Сетевое сообщение для остановки звука на сервере (для других игроков).
-     * Отправляется с клиента на сервер при прерывании удержания.
+     * Сообщение для остановки воспроизведения звука на сервере.
+     * Используется при прерывании взаимодействий.
      */
     public static class StopSoundMessage implements IMessage {
+        /**
+         * Режим действия для определения типа звука
+         */
         private int mode;
+        /**
+         * Координата X позиции звука
+         */
         private double x;
+        /**
+         * Координата Y позиции звука
+         */
         private double y;
+        /**
+         * Координата Z позиции звука
+         */
         private double z;
 
         public StopSoundMessage() {
@@ -447,8 +511,8 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Обработчик сообщения на сервере.
-         * Рассылает сообщение об остановке звука ближайшим игрокам, исключая отправителя.
+         * Обработчик сообщения остановки звука на стороне сервера.
+         * Рассылает команду остановки ближайшим игрокам.
          */
         public static class Handler implements IMessageHandler<StopSoundMessage, IMessage> {
             @Override
@@ -460,13 +524,13 @@ public class ModDataSyncManager {
                             : "power_armor_in_out");
                     String categoryName = SoundCategory.PLAYERS.getName();
                     double range = 32.0D;
-                    AxisAlignedBB aabb = new AxisAlignedBB(message.x - range, message.y - range, message.z - range,
+                    AxisAlignedBB boundingBox = new AxisAlignedBB(message.x - range, message.y - range, message.z - range,
                             message.x + range, message.y + range, message.z + range);
-                    List<EntityPlayerMP> players = player.world.getEntitiesWithinAABB(EntityPlayerMP.class, aabb);
+                    List<EntityPlayerMP> players = player.world.getEntitiesWithinAABB(EntityPlayerMP.class, boundingBox);
                     StopSoundBroadcast broadcast = new StopSoundBroadcast(soundName, categoryName);
-                    for (EntityPlayerMP p : players) {
-                        if (p != player) {
-                            INTERACT_NETWORK.sendTo(broadcast, p);
+                    for (EntityPlayerMP targetPlayer : players) {
+                        if (targetPlayer != player) {
+                            INTERACT_NETWORK.sendTo(broadcast, targetPlayer);
                         }
                     }
                 });
@@ -476,11 +540,17 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Сетевое сообщение для остановки звука на клиенте.
-     * Отправляется с сервера на клиентов для остановки звука.
+     * Широковещательное сообщение для остановки звука на клиентах.
+     * Отправляется сервером для синхронизации остановки звуков.
      */
     public static class StopSoundBroadcast implements IMessage {
+        /**
+         * Имя останавливаемого звука
+         */
         private String soundName;
+        /**
+         * Категория звука для остановки
+         */
         private String categoryName;
 
         public StopSoundBroadcast() {
@@ -504,8 +574,8 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Обработчик сообщения на клиенте.
-         * Останавливает указанный звук.
+         * Обработчик широковещательного сообщения остановки звука на стороне клиента.
+         * Останавливает указанный звук в клиенте.
          */
         public static class Handler implements IMessageHandler<StopSoundBroadcast, IMessage> {
             @Override

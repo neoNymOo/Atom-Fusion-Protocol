@@ -17,15 +17,23 @@ import net.minecraft.world.World;
 import java.util.EnumSet;
 
 /**
- * Utility class for exoskeleton entity operations.
- * Provides methods for installing/uninstalling parts, fusion cores, entering/exiting.
- * Called from event handlers and network message handlers.
- * Extended with methods for installing/uninstalling fusion cores on other players' chestplates.
+ * Утилитарный класс для операций с сущностью экзоскелета.
+ * Предоставляет методы для установки/снятия частей, ядер синтеза, входа/выхода из экзоскелета.
+ * Вызывается из обработчиков событий и сетевых обработчиков сообщений.
+ * Расширен методами для установки/снятия ядер синтеза на нагрудниках других игроков.
  */
 public class UtilEntityExoskeleton {
+    /**
+     * Звук клика экзоскелета
+     */
     public static final SoundEvent EXO_CLICK_SOUND;
+    /**
+     * Звук включения питания
+     */
     public static final SoundEvent POWERON_SOUND;
-    // Set of armor slots for efficient iteration
+    /**
+     * Набор слотов брони для эффективной итерации
+     */
     private static final EnumSet<EntityEquipmentSlot> ARMOR_SLOTS = EnumSet.of(
             EntityEquipmentSlot.HEAD,
             EntityEquipmentSlot.CHEST,
@@ -39,14 +47,14 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Handles general interaction with exoskeleton.
-     * Delegates to install or uninstall based on held item.
+     * Обрабатывает общее взаимодействие с экзоскелетом.
+     * Делегирует установку или снятие в зависимости от предмета в руке.
      *
-     * @param world       The world.
-     * @param player      The player.
-     * @param hand        The hand.
-     * @param entity      The exoskeleton.
-     * @param clickedSlot The clicked slot.
+     * @param world       Мир, в котором происходит взаимодействие
+     * @param player      Игрок, выполняющий взаимодействие
+     * @param hand        Рука, используемая для взаимодействия
+     * @param entity      Экзоскелет, с которым взаимодействуют
+     * @param clickedSlot Кликнутый слот экипировки
      */
     public static void handleInteraction(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
         ItemStack heldStack = player.getHeldItem(hand);
@@ -58,15 +66,15 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Attempts to install an armor part into the exoskeleton.
-     * Checks compatibility and replaces base 'exo' part.
+     * Пытается установить часть брони в экзоскелет.
+     * Проверяет совместимость и заменяет базовую часть 'exo'.
      *
-     * @param world     The world.
-     * @param player    The player.
-     * @param hand      The hand.
-     * @param entity    The exoskeleton.
-     * @param slot      The slot.
-     * @param heldStack The held stack.
+     * @param world     Мир, в котором происходит установка
+     * @param player    Игрок, устанавливающий часть
+     * @param hand      Рука, используемая для установки
+     * @param entity    Экзоскелет, в который устанавливают часть
+     * @param slot      Слот для установки
+     * @param heldStack Устанавливаемый предмет
      */
     private static void tryInstallPart(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot slot, ItemStack heldStack) {
         if (!(heldStack.getItem() instanceof IPowerArmor)) return;
@@ -88,14 +96,14 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Attempts to uninstall an armor part from the exoskeleton.
-     * Replaces with base 'exo' part and gives to player.
+     * Пытается снять часть брони с экзоскелета.
+     * Заменяет на базовую часть 'exo' и отдает игроку.
      *
-     * @param world  The world.
-     * @param player The player.
-     * @param hand   The hand.
-     * @param entity The exoskeleton.
-     * @param slot   The slot.
+     * @param world  Мир, в котором происходит снятие
+     * @param player Игрок, снимающий часть
+     * @param hand   Рука, используемая для снятия
+     * @param entity Экзоскелет, с которого снимают часть
+     * @param slot   Слот для снятия
      */
     private static void tryUninstallPart(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot slot) {
         ItemStack chestplateStack = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
@@ -131,20 +139,20 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Attempts to enter the exoskeleton.
-     * Transfers armor to player, plays sound if powered, updates position, removes entity.
-     * Called from network handler on server.
+     * Пытается войти в экзоскелет.
+     * Передает броню игроку, воспроизводит звук при наличии питания, обновляет позицию, удаляет сущность.
+     * Вызывается из сетевого обработчика на сервере.
      *
-     * @param world  The world.
-     * @param player The player.
-     * @param entity The exoskeleton.
+     * @param world  Мир, в котором происходит вход
+     * @param player Игрок, входящий в экзоскелет
+     * @param entity Экзоскелет, в который входят
      */
     public static void tryEnterExoskeleton(World world, EntityPlayer player, EntityExoskeleton.Exoskeleton entity) {
         if (player.isSneaking()) return;
-        double distanceSq = player.getDistanceSq(entity);
-        if (distanceSq > 1.0D) return;
-        float yawDiff = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
-        if (yawDiff <= -55.0F || yawDiff >= 55.0F) return;
+        double distanceSquared = player.getDistanceSq(entity);
+        if (distanceSquared > 1.0D) return;
+        float yawDifference = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
+        if (yawDifference <= -55.0F || yawDifference >= 55.0F) return;
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
             if (!player.getItemStackFromSlot(slot).isEmpty()) return;
         }
@@ -162,13 +170,13 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Attempts to exit the exoskeleton.
-     * Creates new exoskeleton entity, transfers armor, updates player position.
-     * Called from keybind handler on server.
+     * Пытается выйти из экзоскелета.
+     * Создает новую сущность экзоскелета, передает броню, обновляет позицию игрока.
+     * Вызывается из обработчика клавиши на сервере.
      *
-     * @param world       The world.
-     * @param player      The player.
-     * @param isDeathExit Whether exiting due to death.
+     * @param world       Мир, в котором происходит выход
+     * @param player      Игрок, выходящий из экзоскелета
+     * @param isDeathExit Флаг выхода по причине смерти
      */
     public static void tryExitExoskeleton(World world, EntityPlayer player, Boolean isDeathExit) {
         ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
@@ -193,14 +201,14 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Attempts to install a fusion core into the exoskeleton chestplate.
-     * Transfers energy and plays sound.
+     * Пытается установить ядро синтеза в нагрудник экзоскелета.
+     * Передает энергию и воспроизводит звук.
      *
-     * @param world       The world.
-     * @param player      The player.
-     * @param hand        The hand.
-     * @param entity      The exoskeleton.
-     * @param clickedSlot The slot.
+     * @param world       Мир, в котором происходит установка
+     * @param player      Игрок, устанавливающий ядро
+     * @param hand        Рука, используемая для установки
+     * @param entity      Экзоскелет, в который устанавливают ядро
+     * @param clickedSlot Кликнутый слот
      */
     public static void tryInstallFusionCore(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
         ItemStack chestplate = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
@@ -226,14 +234,14 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Attempts to uninstall a fusion core from the exoskeleton chestplate.
-     * Creates new core item and plays sound.
+     * Пытается снять ядро синтеза с нагрудника экзоскелета.
+     * Создает новый предмет ядра и воспроизводит звук.
      *
-     * @param world       The world.
-     * @param player      The player.
-     * @param hand        The hand.
-     * @param entity      The exoskeleton.
-     * @param clickedSlot The slot.
+     * @param world       Мир, в котором происходит снятие
+     * @param player      Игрок, снимающий ядро
+     * @param hand        Рука, используемая для снятия
+     * @param entity      Экзоскелет, с которого снимают ядро
+     * @param clickedSlot Кликнутый слот
      */
     public static void tryUninstallFusionCore(World world, EntityPlayer player, EnumHand hand, EntityExoskeleton.Exoskeleton entity, EntityEquipmentSlot clickedSlot) {
         ItemStack chestplate = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
@@ -251,13 +259,13 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Attempts to install a fusion core into another player's chestplate.
-     * Transfers energy and plays sound at the target's position.
+     * Пытается установить ядро синтеза в нагрудник другого игрока.
+     * Передает энергию и воспроизводит звук на позиции цели.
      *
-     * @param world  The world.
-     * @param player The interacting player.
-     * @param hand   The hand.
-     * @param target The target player.
+     * @param world  Мир, в котором происходит установка
+     * @param player Игрок, устанавливающий ядро
+     * @param hand   Рука, используемая для установки
+     * @param target Игрок-цель для установки ядра
      */
     public static void tryInstallFusionCoreOnPlayer(World world, EntityPlayer player, EnumHand hand, EntityPlayer target) {
         ItemStack chestplate = target.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
@@ -283,13 +291,13 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Attempts to uninstall a fusion core from another player's chestplate.
-     * Creates new core item, gives to player, and plays sound at the target's position.
+     * Пытается снять ядро синтеза с нагрудника другого игрока.
+     * Создает новый предмет ядра, отдает игроку и воспроизводит звук на позиции цели.
      *
-     * @param world  The world.
-     * @param player The interacting player.
-     * @param hand   The hand.
-     * @param target The target player.
+     * @param world  Мир, в котором происходит снятие
+     * @param player Игрок, снимающий ядро
+     * @param hand   Рука, используемая для снятия
+     * @param target Игрок-цель для снятия ядра
      */
     public static void tryUninstallFusionCoreFromPlayer(World world, EntityPlayer player, EnumHand hand, EntityPlayer target) {
         ItemStack chestplate = target.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
@@ -307,12 +315,12 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Checks if the new armor type is compatible with existing parts.
-     * All non-'exo' parts must match the new type.
+     * Проверяет совместимость нового типа брони с существующими частями.
+     * Все части не типа 'exo' должны соответствовать новому типу.
      *
-     * @param entity  The exoskeleton.
-     * @param newType The new type.
-     * @return True if compatible.
+     * @param entity  Экзоскелет для проверки
+     * @param newType Новый тип брони
+     * @return true если совместимо
      */
     private static boolean isArmorCompatible(EntityExoskeleton.Exoskeleton entity, String newType) {
         if ("exo".equals(newType)) return true;
@@ -327,12 +335,12 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Checks if there is space behind the player for exiting.
+     * Проверяет наличие свободного места позади игрока для выхода.
      *
-     * @param world  The world.
-     * @param player The player.
-     * @param facing The facing direction.
-     * @return True if space is clear.
+     * @param world  Мир для проверки
+     * @param player Игрок для проверки
+     * @param facing Направление взгляда игрока
+     * @return true если место свободно
      */
     public static boolean isSpaceBehindPlayerClear(World world, EntityPlayer player, EnumFacing facing) {
         BlockPos lowerPos = new BlockPos(player).offset(facing.getOpposite());
@@ -344,11 +352,11 @@ public class UtilEntityExoskeleton {
     }
 
     /**
-     * Checks for a boolean NBT tag on the stack.
+     * Проверяет наличие булевого NBT-тега на предмете.
      *
-     * @param stack   The stack.
-     * @param tagName The tag name.
-     * @return True if present and true.
+     * @param stack   Предмет для проверки
+     * @param tagName Имя тега
+     * @return true если тег присутствует и имеет значение true
      */
     public static boolean hasBooleanTag(ItemStack stack, String tagName) {
         NBTTagCompound tag = stack.getTagCompound();

@@ -35,64 +35,106 @@ import java.util.EnumSet;
 import static com.nymoo.afp.common.util.UtilEntityExoskeleton.hasBooleanTag;
 
 /**
- * Обработчик клиентских тиковых событий для обнаружения и обработки действий удержания, связанных с взаимодействием с экзоскелетом.
- * Мониторит ввод с мыши и клавиатуры, управляет временем прогресса, воспроизводит/останавливает звуки и отправляет сетевые сообщения через ModDataSyncManager.
- * Отображает прогресс через интеграцию с HandlerRenderGameOverlayEvent.
- * Расширен для поддержки установки/удаления ядер fusion на нагрудниках других игроков.
+ * Обработчик клиентских тиковых событий для управления взаимодействиями с экзоскелетом и силовой бронёй.
+ * Отслеживает ввод с мыши и клавиатуры, управляет прогрессом удержания, воспроизводит звуки и синхронизирует данные с сервером.
  */
 @Mod.EventBusSubscriber
 public class HandlerClientTickEvent {
-    // Продолжительность удержания для установки/удаления ядер fusion (в секундах)
+    /**
+     * Время удержания для установки/извлечения ядра синтеза в секундах
+     */
     public static final float FUSION_HOLD_TIME = 1.45F;
-    // Продолжительность удержания для входа/выхода из брони (в секундах)
+    /**
+     * Время удержания для входа/выхода из силовой брони в секундах
+     */
     public static final float ARMOR_HOLD_TIME = 6.0F;
-    // Времена эффекта затухания (в секундах)
-    public static final float FADE_DELAY = -1.0F; // Задержка перед началом затухания
-    public static final float FADE_DURATION_IN = 0.5F; // Затухание в черный
-    public static final float FADE_HOLD = 0.5F; // Удержание черного экрана
-    public static final float FADE_DURATION_OUT = 0.5F; // Выход из черного
-
-    // Задержка между установкой и снятием fusion_core (в секундах)
+    /**
+     * Задержка перед началом затемнения экрана в секундах
+     */
+    public static final float FADE_DELAY = -1.0F;
+    /**
+     * Длительность плавного затемнения экрана в секундах
+     */
+    public static final float FADE_DURATION_IN = 0.5F;
+    /**
+     * Длительность удержания чёрного экрана в секундах
+     */
+    public static final float FADE_HOLD = 0.5F;
+    /**
+     * Длительность плавного осветления экрана в секундах
+     */
+    public static final float FADE_DURATION_OUT = 0.5F;
+    /**
+     * Время перезарядки между операциями с ядром синтеза в секундах
+     */
     public static final float FUSION_COOLDOWN = 1.0F;
-
-    // Регулировка громкости звуков (от 0.0F до 1.0F или выше, в зависимости от нужного уровня)
-    public static float FUSION_VOLUME = 1.0F; // Громкость для звуков fusion
-    public static float ARMOR_VOLUME = 1.0F; // Громкость для звуков брони
-
-    // Набор слотов брони для эффективной итерации
+    /**
+     * Набор слотов экипировки брони для оптимизации проверок
+     */
     private static final EnumSet<EntityEquipmentSlot> ARMOR_SLOTS = EnumSet.of(
             EntityEquipmentSlot.HEAD,
             EntityEquipmentSlot.CHEST,
             EntityEquipmentSlot.LEGS,
             EntityEquipmentSlot.FEET
     );
-
-    // Время начала удержания
+    /**
+     * Уровень громкости звуков работы с ядром синтеза
+     */
+    public static float FUSION_VOLUME = 1.0F;
+    /**
+     * Уровень громкости звуков работы с бронёй
+     */
+    public static float ARMOR_VOLUME = 1.0F;
+    /**
+     * Время начала текущего удержания
+     */
     public static long startHoldTime = 0L;
-    // Максимальное время удержания для текущего действия
+    /**
+     * Максимальное время для завершения текущего удержания
+     */
     public static float currentMaxHoldTime = 0F;
-    // Текущий режим действия: -1 - нет, 0 - установка ядер, 1 - удаление ядер, 2 - вход, 3 - выход
+    /**
+     * Текущий режим действия: -1 - нет, 0 - установка ядра, 1 - извлечение ядра, 2 - вход в броню, 3 - выход из брони
+     */
     public static int currentMode = -1;
-    // ID целевой сущности (экзоскелет или другой игрок)
+    /**
+     * ID целевой сущности для взаимодействия
+     */
     public static int currentEntityId = -1;
-    // Целевой слот экипировки
+    /**
+     * Целевой слот экипировки
+     */
     public static EntityEquipmentSlot currentSlot = null;
-    // Текущий воспроизводимый звук загрузки
+    /**
+     * Текущий воспроизводимый звук процесса
+     */
     public static LoadingSound currentSound = null;
-    // Время начала эффекта затухания для входа/выхода из силовой брони
+    /**
+     * Время начала эффекта затемнения экрана
+     */
     public static long fadeStartTime = 0L;
-    // Время последней успешной операции с fusion_core
+    /**
+     * Время последней операции с ядром синтеза
+     */
     private static long lastFusionActionTime = 0L;
-    // Позиция для звука (хранится для отправки сообщений на сервер)
+    /**
+     * Координаты X для позиционирования звука
+     */
     private static double soundX = 0D;
+    /**
+     * Координаты Y для позиционирования звука
+     */
     private static double soundY = 0D;
+    /**
+     * Координаты Z для позиционирования звука
+     */
     private static double soundZ = 0D;
 
     /**
-     * Обработчик клиентских тиковых событий.
-     * Обрабатывает действия удержания в конце каждого тика.
+     * Обрабатывает клиентские тиковые события в конце каждого тика.
+     * Управляет процессами удержания и взаимодействиями с экзоскелетом.
      *
-     * @param event Событие тика.
+     * @param event Событие тика клиента
      */
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
@@ -101,60 +143,57 @@ public class HandlerClientTickEvent {
             return;
         }
 
-        Minecraft mc = Minecraft.getMinecraft();
-        if (mc == null || mc.player == null || mc.world == null) {
-            resetHoldAndSound(mc, false);
+        Minecraft minecraft = Minecraft.getMinecraft();
+        if (minecraft == null || minecraft.player == null || minecraft.world == null) {
+            resetHoldAndSound(minecraft, false);
             return;
         }
 
-        EntityPlayer player = mc.player;
-        World world = mc.world;
+        EntityPlayer player = minecraft.player;
+        World world = minecraft.world;
         boolean isHoldingRightClick = Mouse.isButtonDown(1);
 
-        // Кэшируем часто используемые значения для оптимизации
         ItemStack heldItem = player.getHeldItem(EnumHand.MAIN_HAND);
-        RayTraceResult rayTrace = mc.objectMouseOver;
+        RayTraceResult rayTrace = minecraft.objectMouseOver;
 
         if (startHoldTime != 0L) {
-            long now = System.currentTimeMillis();
-            float elapsed = (now - startHoldTime) / 1000.0F;
+            long currentTime = System.currentTimeMillis();
+            float elapsedTime = (currentTime - startHoldTime) / 1000.0F;
 
-            if (!isHoldValid(player, world, isHoldingRightClick, mc, heldItem, rayTrace)) {
-                resetHoldAndSound(mc, false);
+            if (!isHoldValid(player, world, isHoldingRightClick, minecraft, heldItem, rayTrace)) {
+                resetHoldAndSound(minecraft, false);
                 return;
             }
 
-            if (elapsed >= currentMaxHoldTime) {
+            if (elapsedTime >= currentMaxHoldTime) {
                 processHoldCompletion(player);
-                resetHoldAndSound(mc, true);
+                resetHoldAndSound(minecraft, true);
             }
         } else {
-            tryStartHold(player, world, isHoldingRightClick, mc, heldItem, rayTrace);
+            tryStartHold(player, world, isHoldingRightClick, minecraft, heldItem, rayTrace);
         }
     }
 
     /**
-     * Проверяет, остается ли текущее действие удержания валидным на основе ввода и цели.
-     * Поддерживает как сущности экзоскелета, так и других игроков для действий с ядрами fusion.
-     * Оптимизировано: вынесена общая валидация в отдельный метод.
+     * Проверяет валидность текущего действия удержания.
      *
-     * @param player Игрок.
-     * @param world Мир.
-     * @param isHoldingRightClick Удерживается ли правая кнопка мыши.
-     * @param mc Экземпляр Minecraft.
-     * @param heldItem Предмет в главной руке (кэширован).
-     * @param rayTrace Результат трассировки луча (кэширован).
-     * @return True, если удержание все еще валидно.
+     * @param player              Игрок, выполняющий действие
+     * @param world               Мир, в котором происходит действие
+     * @param isHoldingRightClick Флаг удержания правой кнопки мыши
+     * @param minecraft           Экземпляр клиента Minecraft
+     * @param heldItem            Предмет в основной руке игрока
+     * @param rayTrace            Результат трассировки луча взгляда
+     * @return true если действие остаётся валидным, false в противном случае
      */
-    private static boolean isHoldValid(EntityPlayer player, World world, boolean isHoldingRightClick, Minecraft mc, ItemStack heldItem, RayTraceResult rayTrace) {
-        if (currentMode == 3) { // Режим выхода
+    private static boolean isHoldValid(EntityPlayer player, World world, boolean isHoldingRightClick, Minecraft minecraft, ItemStack heldItem, RayTraceResult rayTrace) {
+        if (currentMode == 3) {
             return KeybindingExitPowerArmor.keys.isKeyDown()
                     && !player.isSneaking()
                     && isWearingPowerArmor(player)
                     && !player.isRiding()
                     && UtilEntityExoskeleton.isSpaceBehindPlayerClear(world, player, player.getHorizontalFacing())
-                    && !isPlayerMoving(mc)
-                    && !mc.gameSettings.keyBindJump.isKeyDown();
+                    && !isPlayerMoving(minecraft)
+                    && !minecraft.gameSettings.keyBindJump.isKeyDown();
         }
 
         if (!isHoldingRightClick) {
@@ -170,7 +209,6 @@ public class HandlerClientTickEvent {
             return false;
         }
 
-        // Валидация позиции, поворота и расстояния
         if (!validateTargetPositionAndYaw(player, entity)) {
             return false;
         }
@@ -186,19 +224,19 @@ public class HandlerClientTickEvent {
             return false;
         }
 
-        if (currentMode == 0 || currentMode == 1) { // Режимы ядер fusion
+        if (currentMode == 0 || currentMode == 1) {
             if (!player.isSneaking() || !hasBooleanTag(chestStack, "soldered")) {
                 return false;
             }
-            NBTTagCompound tag = chestStack.getTagCompound();
-            boolean hasEnergy = tag != null && tag.hasKey("fusion_depletion");
+            NBTTagCompound tagCompound = chestStack.getTagCompound();
+            boolean hasEnergy = tagCompound != null && tagCompound.hasKey("fusion_depletion");
 
             if (currentMode == 0) {
                 return !heldItem.isEmpty() && heldItem.getItem() == ItemFusionCore.itemFusionCore && !hasEnergy;
             } else {
                 return heldItem.isEmpty() && hasEnergy;
             }
-        } else if (currentMode == 2) { // Режим входа (только для экзоскелета)
+        } else if (currentMode == 2) {
             if (!(entity instanceof EntityExoskeleton.Exoskeleton) || player.isSneaking() || !heldItem.isEmpty()) {
                 return false;
             }
@@ -209,10 +247,10 @@ public class HandlerClientTickEvent {
     }
 
     /**
-     * Обрабатывает завершенное действие удержания, отправляя сетевое сообщение.
-     * Интегрируется с ModDataSyncManager для сообщений и KeybindingExitPowerArmor для выхода.
+     * Обрабатывает завершение успешного удержания.
+     * Отправляет соответствующие сетевые сообщения и запускает визуальные эффекты.
      *
-     * @param player Игрок.
+     * @param player Игрок, завершивший действие
      */
     private static void processHoldCompletion(EntityPlayer player) {
         if (currentMode == 0 || currentMode == 1 || currentMode == 2) {
@@ -221,39 +259,34 @@ public class HandlerClientTickEvent {
             AtomFusionProtocol.PACKET_HANDLER.sendToServer(new KeybindingExitPowerArmor.KeyBindingPressedMessage());
         }
 
-        // Запуск эффекта затухания для входа (2) или выхода (3)
         if (currentMode == 2 || currentMode == 3) {
             fadeStartTime = System.currentTimeMillis() + (long) (FADE_DELAY * 1000);
         }
 
-        // Установка времени последней операции для fusion_core
         if (currentMode == 0 || currentMode == 1) {
             lastFusionActionTime = System.currentTimeMillis();
         }
     }
 
     /**
-     * Пытается начать новое действие удержания на основе ввода.
-     * Поддерживает как сущности экзоскелета, так и других игроков для действий с ядрами fusion.
-     * Оптимизировано: вынесена общая валидация в отдельный метод.
+     * Пытается начать новое действие удержания на основе текущего ввода игрока.
      *
-     * @param player Игрок.
-     * @param world Мир.
-     * @param isHoldingRightClick Удерживается ли правая кнопка мыши.
-     * @param mc Экземпляр Minecraft.
-     * @param heldItem Предмет в главной руке (кэширован).
-     * @param rayTrace Результат трассировки луча (кэширован).
+     * @param player              Игрок, инициирующий действие
+     * @param world               Мир, в котором происходит действие
+     * @param isHoldingRightClick Флаг удержания правой кнопки мыши
+     * @param minecraft           Экземпляр клиента Minecraft
+     * @param heldItem            Предмет в основной руке игрока
+     * @param rayTrace            Результат трассировки луча взгляда
      */
-    private static void tryStartHold(EntityPlayer player, World world, boolean isHoldingRightClick, Minecraft mc, ItemStack heldItem, RayTraceResult rayTrace) {
-        // Сначала проверка на действие выхода
+    private static void tryStartHold(EntityPlayer player, World world, boolean isHoldingRightClick, Minecraft minecraft, ItemStack heldItem, RayTraceResult rayTrace) {
         if (KeybindingExitPowerArmor.keys.isKeyDown()
                 && !player.isSneaking()
                 && isWearingPowerArmor(player)
                 && !player.isRiding()
                 && UtilEntityExoskeleton.isSpaceBehindPlayerClear(world, player, player.getHorizontalFacing())
-                && !isPlayerMoving(mc)
-                && !mc.gameSettings.keyBindJump.isKeyDown()) {
-            startHold(3, ARMOR_HOLD_TIME, -1, null, player.posX, player.posY, player.posZ, mc);
+                && !isPlayerMoving(minecraft)
+                && !minecraft.gameSettings.keyBindJump.isKeyDown()) {
+            startHold(3, ARMOR_HOLD_TIME, -1, null, player.posX, player.posY, player.posZ, minecraft);
             return;
         }
 
@@ -266,20 +299,19 @@ public class HandlerClientTickEvent {
         }
 
         Entity entity = rayTrace.entityHit;
-        boolean isExo = entity instanceof EntityExoskeleton.Exoskeleton;
-        boolean isPlayerTarget = entity instanceof EntityPlayer && entity != player;
+        boolean isExoskeleton = entity instanceof EntityExoskeleton.Exoskeleton;
+        boolean isOtherPlayer = entity instanceof EntityPlayer && entity != player;
 
-        if (!(isExo || isPlayerTarget)) {
+        if (!(isExoskeleton || isOtherPlayer)) {
             return;
         }
 
-        // Валидация позиции, поворота и расстояния
         if (!validateTargetPositionAndYaw(player, entity)) {
             return;
         }
 
         ItemStack chestStack = getChestStack(entity);
-        if (chestStack.isEmpty() || (isPlayerTarget && !(chestStack.getItem() instanceof IPowerArmor))) {
+        if (chestStack.isEmpty() || (isOtherPlayer && !(chestStack.getItem() instanceof IPowerArmor))) {
             return;
         }
 
@@ -291,41 +323,39 @@ public class HandlerClientTickEvent {
 
         if (player.isSneaking()) {
             if (hasBooleanTag(chestStack, "soldered")) {
-                NBTTagCompound tag = chestStack.getTagCompound();
-                boolean hasEnergy = tag != null && tag.hasKey("fusion_depletion");
+                NBTTagCompound tagCompound = chestStack.getTagCompound();
+                boolean hasEnergy = tagCompound != null && tagCompound.hasKey("fusion_depletion");
 
                 if (!heldItem.isEmpty() && heldItem.getItem() == ItemFusionCore.itemFusionCore && !hasEnergy) {
                     if ((System.currentTimeMillis() - lastFusionActionTime) / 1000.0F < FUSION_COOLDOWN) {
                         return;
                     }
-                    startHold(0, FUSION_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, mc);
+                    startHold(0, FUSION_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
                 } else if (heldItem.isEmpty() && hasEnergy) {
                     if ((System.currentTimeMillis() - lastFusionActionTime) / 1000.0F < FUSION_COOLDOWN) {
                         return;
                     }
-                    startHold(1, FUSION_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, mc);
+                    startHold(1, FUSION_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
                 }
             }
-        } else if (isExo && heldItem.isEmpty() && (hasBooleanTag(chestStack, "soldered") || isAllExo((EntityExoskeleton.Exoskeleton) entity)) && isPlayerArmorEmpty(player)) {
-            startHold(2, ARMOR_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, mc);
+        } else if (isExoskeleton && heldItem.isEmpty() && (hasBooleanTag(chestStack, "soldered") || isAllExo((EntityExoskeleton.Exoskeleton) entity)) && isPlayerArmorEmpty(player)) {
+            startHold(2, ARMOR_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
         }
     }
 
     /**
-     * Запускает действие удержания, устанавливая переменные и воспроизводя звук.
-     * Звук выбирается в зависимости от режима: fusion_core_in_out для 0/1, power_armor_in_out для 2/3.
-     * Отправляет сообщение на сервер для воспроизведения звука для других игроков.
+     * Начинает новое действие удержания с указанными параметрами.
      *
-     * @param mode Режим действия.
-     * @param maxTime Максимальное время удержания.
-     * @param entityId ID сущности.
-     * @param slot Слот экипировки.
-     * @param x Позиция X для звука.
-     * @param y Позиция Y для звука.
-     * @param z Позиция Z для звука.
-     * @param mc Экземпляр Minecraft.
+     * @param mode      Режим действия
+     * @param maxTime   Максимальное время удержания в секундах
+     * @param entityId  ID целевой сущности
+     * @param slot      Целевой слот экипировки
+     * @param x         Координата X для звука
+     * @param y         Координата Y для звука
+     * @param z         Координата Z для звука
+     * @param minecraft Экземпляр клиента Minecraft
      */
-    private static void startHold(int mode, float maxTime, int entityId, EntityEquipmentSlot slot, double x, double y, double z, Minecraft mc) {
+    private static void startHold(int mode, float maxTime, int entityId, EntityEquipmentSlot slot, double x, double y, double z, Minecraft minecraft) {
         startHoldTime = System.currentTimeMillis();
         currentMode = mode;
         currentMaxHoldTime = maxTime;
@@ -336,24 +366,22 @@ public class HandlerClientTickEvent {
         soundZ = z;
 
         String soundName = (mode == 0 || mode == 1) ? "fusion_core_in_out" : "power_armor_in_out";
-        SoundEvent soundToPlay = ModElementRegistry.getSound(new ResourceLocation(Tags.MOD_ID, soundName));
+        SoundEvent soundEvent = ModElementRegistry.getSound(new ResourceLocation(Tags.MOD_ID, soundName));
         float volume = (mode == 0 || mode == 1) ? FUSION_VOLUME : ARMOR_VOLUME;
 
-        if (currentSound == null || !mc.getSoundHandler().isSoundPlaying(currentSound)) {
-            currentSound = new LoadingSound(soundToPlay, (float) x, (float) y, (float) z, volume);
-            mc.getSoundHandler().playSound(currentSound);
+        if (currentSound == null || !minecraft.getSoundHandler().isSoundPlaying(currentSound)) {
+            currentSound = new LoadingSound(soundEvent, (float) x, (float) y, (float) z, volume);
+            minecraft.getSoundHandler().playSound(currentSound);
         }
 
-        // Отправка сообщения на сервер для воспроизведения звука для других игроков
         ModDataSyncManager.INTERACT_NETWORK.sendToServer(new ModDataSyncManager.StartSoundMessage(mode, x, y, z));
     }
 
     /**
-     * Определяет кликнутый слот на основе позиции Y попадания.
-     * Использует пороги из EntityExoskeleton.
+     * Определяет слот экипировки на основе высоты попадания.
      *
-     * @param hitY Относительная позиция Y попадания.
-     * @return Слот экипировки.
+     * @param hitY Относительная координата Y попадания
+     * @return Определённый слот экипировки
      */
     private static EntityEquipmentSlot getClickedSlot(float hitY) {
         EntityEquipmentSlot clickedSlot = EntityExoskeleton.Exoskeleton.SLOT_ORDER[3];
@@ -367,14 +395,14 @@ public class HandlerClientTickEvent {
     }
 
     /**
-     * Проверяет, все ли слоты брони на экзоскелете типа 'exo'.
+     * Проверяет, состоит ли весь комплект экзоскелета из компонентов типа 'exo'.
      *
-     * @param exo Экзоскелет.
-     * @return True, если все 'exo'.
+     * @param exoskeleton Экземпляр экзоскелета для проверки
+     * @return true если все компоненты типа 'exo', false в противном случае
      */
-    private static boolean isAllExo(EntityExoskeleton.Exoskeleton exo) {
+    private static boolean isAllExo(EntityExoskeleton.Exoskeleton exoskeleton) {
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
-            ItemStack stack = exo.getItemStackFromSlot(slot);
+            ItemStack stack = exoskeleton.getItemStackFromSlot(slot);
             if (stack.isEmpty() || !"exo".equals(((IPowerArmor) stack.getItem()).getPowerArmorType())) {
                 return false;
             }
@@ -383,35 +411,30 @@ public class HandlerClientTickEvent {
     }
 
     /**
-     * Проверяет, носит ли игрок силовую броню.
+     * Проверяет, экипирован ли игрок в силовую броню.
      *
-     * @param player Игрок.
-     * @return True, если носит.
+     * @param player Игрок для проверки
+     * @return true если игрок носит силовую броню, false в противном случае
      */
     private static boolean isWearingPowerArmor(EntityPlayer player) {
-        ItemStack chest = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        return !chest.isEmpty() && chest.getItem() instanceof IPowerArmor;
+        ItemStack chestStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+        return !chestStack.isEmpty() && chestStack.getItem() instanceof IPowerArmor;
     }
 
     /**
-     * Сбрасывает состояние удержания и останавливает звук, если нужно.
-     * Если allowFadeOut true (завершение взаимодействия), звук не прерывается, позволяя затуханию.
-     * В других случаях (прерывание), звук останавливается.
-     * Отправляет сообщение на сервер для остановки звука для других игроков при прерывании.
-     * Вызывается при прерывании или завершении.
+     * Сбрасывает состояние удержания и управляет воспроизведением звуков.
      *
-     * @param mc Экземпляр Minecraft.
-     * @param allowFadeOut Разрешить затухание звука (true при успешном завершении).
+     * @param minecraft    Экземпляр клиента Minecraft
+     * @param allowFadeOut Разрешить плавное затухание звука при успешном завершении
      */
-    private static void resetHoldAndSound(Minecraft mc, boolean allowFadeOut) {
+    private static void resetHoldAndSound(Minecraft minecraft, boolean allowFadeOut) {
         if (startHoldTime != 0L) {
-            if (currentSound != null && mc.getSoundHandler().isSoundPlaying(currentSound)) {
+            if (currentSound != null && minecraft.getSoundHandler().isSoundPlaying(currentSound)) {
                 if (!allowFadeOut) {
-                    mc.getSoundHandler().stopSound(currentSound);
+                    minecraft.getSoundHandler().stopSound(currentSound);
                 }
             }
             if (!allowFadeOut && currentMode != -1) {
-                // Отправка сообщения на сервер для остановки звука для других игроков
                 ModDataSyncManager.INTERACT_NETWORK.sendToServer(new ModDataSyncManager.StopSoundMessage(currentMode, soundX, soundY, soundZ));
             }
             currentSound = null;
@@ -429,8 +452,8 @@ public class HandlerClientTickEvent {
     /**
      * Проверяет, пусты ли все слоты брони игрока.
      *
-     * @param player Игрок.
-     * @return True, если все пусты.
+     * @param player Игрок для проверки
+     * @return true если все слоты брони пусты, false в противном случае
      */
     private static boolean isPlayerArmorEmpty(EntityPlayer player) {
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
@@ -442,25 +465,24 @@ public class HandlerClientTickEvent {
     }
 
     /**
-     * Проверяет, вводит ли игрок движение (WASD).
+     * Проверяет, движется ли игрок с помощью клавиш управления.
      *
-     * @param mc Экземпляр Minecraft.
-     * @return True, если движется.
+     * @param minecraft Экземпляр клиента Minecraft
+     * @return true если игрок движется, false в противном случае
      */
-    private static boolean isPlayerMoving(Minecraft mc) {
-        KeyBinding forward = mc.gameSettings.keyBindForward;
-        KeyBinding back = mc.gameSettings.keyBindBack;
-        KeyBinding left = mc.gameSettings.keyBindLeft;
-        KeyBinding right = mc.gameSettings.keyBindRight;
-        return forward.isKeyDown() || back.isKeyDown() || left.isKeyDown() || right.isKeyDown();
+    private static boolean isPlayerMoving(Minecraft minecraft) {
+        KeyBinding forwardKey = minecraft.gameSettings.keyBindForward;
+        KeyBinding backKey = minecraft.gameSettings.keyBindBack;
+        KeyBinding leftKey = minecraft.gameSettings.keyBindLeft;
+        KeyBinding rightKey = minecraft.gameSettings.keyBindRight;
+        return forwardKey.isKeyDown() || backKey.isKeyDown() || leftKey.isKeyDown() || rightKey.isKeyDown();
     }
 
     /**
-     * Вспомогательный метод для получения нагрудника сущности.
-     * Поддерживает экзоскелет и игроков.
+     * Получает предмет из слота нагрудника целевой сущности.
      *
-     * @param entity Сущность.
-     * @return Стек нагрудника.
+     * @param entity Сущность для проверки
+     * @return Предмет из слота нагрудника или пустой стек
      */
     private static ItemStack getChestStack(Entity entity) {
         if (entity instanceof EntityExoskeleton.Exoskeleton) {
@@ -472,30 +494,37 @@ public class HandlerClientTickEvent {
     }
 
     /**
-     * Валидирует позицию, поворот и расстояние до цели.
-     * Выделено для избежания дублирования кода.
+     * Проверяет корректность позиции и ориентации игрока относительно цели.
      *
-     * @param player Игрок.
-     * @param entity Цель.
-     * @return True, если валидно.
+     * @param player Игрок для проверки
+     * @param entity Целевая сущность
+     * @return true если позиция и ориентация валидны, false в противном случае
      */
     private static boolean validateTargetPositionAndYaw(EntityPlayer player, Entity entity) {
-        double distanceSq = player.getDistanceSq(entity);
-        if (distanceSq > 1.0D) {
+        double distanceSquared = player.getDistanceSq(entity);
+        if (distanceSquared > 1.0D) {
             return false;
         }
 
-        float yawDiff = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
-        return yawDiff >= -55.0F && yawDiff <= 55.0F;
+        float yawDifference = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
+        return yawDifference >= -55.0F && yawDifference <= 55.0F;
     }
 
     /**
-     * Пользовательский позиционированный звук для процесса загрузки.
-     * Без повторения, полный объем.
+     * Позиционированный звук для процессов удержания с настраиваемой громкостью.
      */
     public static class LoadingSound extends net.minecraft.client.audio.PositionedSound {
-        public LoadingSound(SoundEvent soundIn, float x, float y, float z, float volume) {
-            super(soundIn, SoundCategory.PLAYERS);
+        /**
+         * Создает новый позиционированный звук процесса.
+         *
+         * @param soundEvent Звуковое событие для воспроизведения
+         * @param x          Координата X воспроизведения
+         * @param y          Координата Y воспроизведения
+         * @param z          Координата Z воспроизведения
+         * @param volume     Уровень громкости звука
+         */
+        public LoadingSound(SoundEvent soundEvent, float x, float y, float z, float volume) {
+            super(soundEvent, SoundCategory.PLAYERS);
             this.repeat = false;
             this.volume = volume;
             this.pitch = 1.0F;

@@ -1,18 +1,34 @@
 package com.nymoo.afp.common.config;
+
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+/**
+ * Конфигурационный класс мода Atom Fusion Protocol.
+ * Управляет настройками силовой брони, экзоскелетов и энергопотребления.
+ */
 public class AFPConfig {
+    /**
+     * Карта наборов брони для быстрого доступа по имени
+     */
     private static final Map<String, ArmorSet> armorSets = new HashMap<>();
+
+    // Общие настройки звуков
     public static boolean playServoJumpSound = true;
     public static boolean playServoStepSound = true;
     public static boolean handlePlayerDeath = true;
+
+    // Настройки взаимодействия с бронёй
     public static boolean canDispenserEquipPowerArmor = false;
     public static boolean canPlayerUnequipPowerArmor = false;
     public static boolean canPlayerEquipPowerArmor = false;
     public static boolean canExoskeletonSwingArms = false;
+
+    // Настройки физики и хитбоксов
     public static float exoskeletonHitboxWidth = 0.65F;
     public static float exoskeletonHitboxHeight = 2.0F;
     public static float powerArmorSpeedMultiplier = 0.85F;
@@ -20,6 +36,8 @@ public class AFPConfig {
     public static float powerArmorKnockbackMultiplier = 0.0F;
     public static float powerArmorFallDamageMultiplier = 0.2F;
     public static float powerArmorFallThreshold = 14.0F;
+
+    // Настройки энергопотребления
     public static float maxDepletion = 288000f;
     public static float stepDeltaThreshold = 0.06f;
     public static float baseDepletionRate = 1.0f;
@@ -30,14 +48,29 @@ public class AFPConfig {
     public static float hurtDepletionAdder = 1.0f;
     public static float jetpackDepletionAdder = 2.0f;
     public static float walkDepletionAdder = 0.2f;
+
+    /**
+     * Получает набор характеристик брони по имени.
+     *
+     * @param name Имя набора брони (например, "x-03", "t-60")
+     * @return Набор характеристик брони или null если не найден
+     */
     public static ArmorSet getArmorSet(String name) {
         return armorSets.get(name.toLowerCase());
     }
+
+    /**
+     * Загружает конфигурацию из файла и инициализирует все настройки.
+     *
+     * @param config Объект конфигурации Forge
+     */
     public static void loadFromConfig(Configuration config) {
         final String CATEGORY_SETTINGS = "settings";
         final String CATEGORY_POWER_ARMOR = CATEGORY_SETTINGS + ".power_armor";
         final String CATEGORY_GENERAL = CATEGORY_SETTINGS + ".general";
+
         config.setCategoryComment(CATEGORY_SETTINGS, "Minecraft restart is required for these settings to take effect. Make sure parameters are set in the correct format.");
+
         config.setCategoryPropertyOrder(CATEGORY_GENERAL, Arrays.asList(
                 "play_servo_jump_sound",
                 "play_servo_step_sound",
@@ -64,6 +97,7 @@ public class AFPConfig {
                 "jetpack_depletion_adder",
                 "walk_depletion_adder"
         ));
+
         config.setCategoryComment(CATEGORY_POWER_ARMOR, "Property format: helmet_protection, chestplate_protection, leggings_protection, boots_protection, durability, enchantability, toughness");
         config.setCategoryPropertyOrder(CATEGORY_POWER_ARMOR, Arrays.asList(
                 "x-03",
@@ -74,34 +108,17 @@ public class AFPConfig {
                 "t-45",
                 "exo"
         ));
-        String defaultX03 = "3, 7, 5, 2, 350, 12, 3.2";
-        Property x03Prop = config.get(CATEGORY_POWER_ARMOR, "x-03", defaultX03, "X-03 power armor configuration. [default: " + defaultX03 + "]");
-        ArmorSet x03Set = parseArmorSet(x03Prop.getString());
-        armorSets.put("x-03", x03Set);
-        String defaultX02 = "2, 8, 6, 3, 420, 8, 2.7";
-        Property x02Prop = config.get(CATEGORY_POWER_ARMOR, "x-02", defaultX02, "X-02 power armor configuration. [default: " + defaultX02 + "]");
-        ArmorSet x02Set = parseArmorSet(x02Prop.getString());
-        armorSets.put("x-02", x02Set);
-        String defaultX01 = "4, 9, 4, 1, 280, 15, 4.1";
-        Property x01Prop = config.get(CATEGORY_POWER_ARMOR, "x-01", defaultX01, "X-01 power armor configuration. [default: " + defaultX01 + "]");
-        ArmorSet x01Set = parseArmorSet(x01Prop.getString());
-        armorSets.put("x-01", x01Set);
-        String defaultT60 = "3, 6, 5, 2, 380, 9, 3.8";
-        Property t60Prop = config.get(CATEGORY_POWER_ARMOR, "t-60", defaultT60, "T-60 power armor configuration. [default: " + defaultT60 + "]");
-        ArmorSet t60Set = parseArmorSet(t60Prop.getString());
-        armorSets.put("t-60", t60Set);
-        String defaultT51 = "2, 7, 4, 3, 320, 11, 2.9";
-        Property t51Prop = config.get(CATEGORY_POWER_ARMOR, "t-51", defaultT51, "T-51 power armor configuration. [default: " + defaultT51 + "]");
-        ArmorSet t51Set = parseArmorSet(t51Prop.getString());
-        armorSets.put("t-51", t51Set);
-        String defaultT45 = "4, 8, 6, 2, 450, 7, 3.5";
-        Property t45Prop = config.get(CATEGORY_POWER_ARMOR, "t-45", defaultT45, "T-45 power armor configuration. [default: " + defaultT45 + "]");
-        ArmorSet t45Set = parseArmorSet(t45Prop.getString());
-        armorSets.put("t-45", t45Set);
-        String defaultExo = "3, 9, 5, 1, 500, 14, 4.3";
-        Property exoProp = config.get(CATEGORY_POWER_ARMOR, "exo", defaultExo, "Exoskeleton configuration. [default: " + defaultExo + "]");
-        ArmorSet exoSet = parseArmorSet(exoProp.getString());
-        armorSets.put("exo", exoSet);
+
+        // Загрузка характеристик наборов брони
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x-03", "3, 7, 5, 2, 350, 12, 3.2");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x-02", "2, 8, 6, 3, 420, 8, 2.7");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x-01", "4, 9, 4, 1, 280, 15, 4.1");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t-60", "3, 6, 5, 2, 380, 9, 3.8");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t-51", "2, 7, 4, 3, 320, 11, 2.9");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t-45", "4, 8, 6, 2, 450, 7, 3.5");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "exo", "3, 9, 5, 1, 500, 14, 4.3");
+
+        // Загрузка общих настроек
         playServoJumpSound = config.getBoolean("play_servo_jump_sound", CATEGORY_GENERAL, true, "Should servo sounds play when the player jumps while wearing power armor?");
         playServoStepSound = config.getBoolean("play_servo_step_sound", CATEGORY_GENERAL, true, "Should servo sounds play when the player walks while wearing power armor?");
         servoVolume = (float) config.get(CATEGORY_GENERAL, "servo_volume", 0.55, "Volume for servo step sounds. [default: 0.55]").getDouble();
@@ -127,6 +144,29 @@ public class AFPConfig {
         jetpackDepletionAdder = (float) config.get(CATEGORY_GENERAL, "jetpack_depletion_adder", 2.0, "Additional depletion rate when using jetpack in power armor. [default: 2.0]").getDouble();
         walkDepletionAdder = (float) config.get(CATEGORY_GENERAL, "walk_depletion_adder", 0.2, "Additional depletion rate for horizontal ground movement (non-sprinting) in power armor. [default: 0.2]").getDouble();
     }
+
+    /**
+     * Загружает характеристики набора брони из конфигурации.
+     *
+     * @param config       Объект конфигурации Forge
+     * @param category     Категория конфигурации
+     * @param armorName    Имя набора брони
+     * @param defaultValue Значение по умолчанию в формате CSV
+     */
+    private static void loadArmorSet(Configuration config, String category, String armorName, String defaultValue) {
+        String description = armorName.toUpperCase() + " power armor configuration. [default: " + defaultValue + "]";
+        Property property = config.get(category, armorName, defaultValue, description);
+        ArmorSet armorSet = parseArmorSet(property.getString());
+        armorSets.put(armorName, armorSet);
+    }
+
+    /**
+     * Парсит строку с характеристиками брони в объект ArmorSet.
+     *
+     * @param value Строка с характеристиками в формате CSV
+     * @return Объект с характеристиками брони
+     * @throws IllegalArgumentException При неверном формате строки
+     */
     private static ArmorSet parseArmorSet(String value) {
         String[] parts = value.split(",");
         if (parts.length != 7) {
@@ -142,13 +182,39 @@ public class AFPConfig {
         set.toughness = Float.parseFloat(parts[6].trim());
         return set;
     }
+
+    /**
+     * Класс для хранения характеристик набора брони.
+     * Содержит параметры защиты, прочности и зачаровываемости.
+     */
     public static class ArmorSet {
+        /**
+         * Уровень защиты шлема
+         */
         public int helmetProtection;
+        /**
+         * Уровень защиты нагрудника
+         */
         public int chestplateProtection;
+        /**
+         * Уровень защиты поножей
+         */
         public int leggingsProtection;
+        /**
+         * Уровень защиты ботинок
+         */
         public int bootsProtection;
+        /**
+         * Прочность брони
+         */
         public int durability;
+        /**
+         * Уровень зачаровываемости
+         */
         public int enchantability;
+        /**
+         * Жёсткость брони
+         */
         public float toughness;
     }
 }

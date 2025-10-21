@@ -6,18 +6,55 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.player.EntityPlayer;
 
+/**
+ * Абстрактная модель брони для силовой брони мода Atom Fusion Protocol.
+ * Расширяет стандартную модель бипеда для поддержки кастомных частей брони и анимаций.
+ */
 public class AbstractArmorModel extends ModelBiped {
 
+    /**
+     * Модель головы брони
+     */
     public ModelRendererObj head;
+    /**
+     * Модель тела брони
+     */
     public ModelRendererObj body;
+    /**
+     * Модель левой руки брони
+     */
     public ModelRendererObj leftArm;
+    /**
+     * Модель правой руки брони
+     */
     public ModelRendererObj rightArm;
+    /**
+     * Модель левой ноги брони
+     */
     public ModelRendererObj leftLeg;
+    /**
+     * Модель правой ноги брони
+     */
     public ModelRendererObj rightLeg;
+    /**
+     * Модель левой ступни брони
+     */
     public ModelRendererObj leftFoot;
+    /**
+     * Модель правой ступни брони
+     */
     public ModelRendererObj rightFoot;
+    /**
+     * Тип брони для определения специфических свойств
+     */
     int type;
 
+    /**
+     * Создает новую абстрактную модель брони с указанным типом.
+     * Инициализирует все части модели и устанавливает точки вращения.
+     *
+     * @param type Тип брони для создания модели
+     */
     public AbstractArmorModel(int type) {
         this.type = type;
 
@@ -31,6 +68,18 @@ public class AbstractArmorModel extends ModelBiped {
         rightFoot = new ModelRendererObj(null).setRotationPoint(-1.9F, 12.0F, 0.0F);
     }
 
+    /**
+     * Устанавливает углы поворота для всех частей модели на основе состояния сущности.
+     * Синхронизирует кастомные части модели со стандартными частями бипеда и обрабатывает особые случаи.
+     *
+     * @param walkCycle     Цикл ходьбы для анимации
+     * @param walkAmplitude Амплитуда ходьбы для анимации
+     * @param idleCycle     Цикл простоя для анимации
+     * @param headYaw       Угол поворота головы по горизонтали
+     * @param headPitch     Угол поворота головы по вертикали
+     * @param scale         Масштабный коэффициент модели
+     * @param entity        Сущность, для которой устанавливаются углы
+     */
     @Override
     public void setRotationAngles(float walkCycle, float walkAmplitude, float idleCycle, float headYaw, float headPitch, float scale, Entity entity) {
 
@@ -41,6 +90,7 @@ public class AbstractArmorModel extends ModelBiped {
             this.isSneak = player.isSneaking();
         }
 
+        // Синхронизация позиций и углов кастомных частей со стандартными частями бипеда
         this.head.rotationPointX = this.bipedHead.rotationPointX;
         this.head.rotationPointY = this.bipedHead.rotationPointY;
         this.head.rotationPointY = this.bipedHead.rotationPointY;
@@ -97,6 +147,7 @@ public class AbstractArmorModel extends ModelBiped {
         this.rightFoot.rotateAngleY = this.bipedRightLeg.rotateAngleY;
         this.rightFoot.rotateAngleZ = this.bipedRightLeg.rotateAngleZ;
 
+        // Специальная обработка для зомби
         if (entity instanceof EntityZombie) {
             boolean armsRaised = false;
             if (entity instanceof EntityZombie)
@@ -113,6 +164,7 @@ public class AbstractArmorModel extends ModelBiped {
             }
         }
 
+        // Обработка позиции при приседании
         if (this.isSneak) {
             this.head.offsetY = 4.24F;
             this.head.rotationPointY -= 1.045F;
@@ -133,6 +185,7 @@ public class AbstractArmorModel extends ModelBiped {
             this.leftLeg.rotationPointZ = -1F;
 
         } else {
+            // Сброс смещений при нормальной стойке
             this.head.offsetY = 0F;
             this.body.offsetY = 0F;
             this.rightArm.offsetY = 0F;

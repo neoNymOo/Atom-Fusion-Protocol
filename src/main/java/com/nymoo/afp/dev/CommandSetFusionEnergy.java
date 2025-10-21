@@ -16,6 +16,10 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Элемент мода для регистрации команды установки энергии ядра синтеза.
+ * Предоставляет административную команду для настройки уровня энергии в ядрах синтеза.
+ */
 @ModElementRegistry.ModElement.Tag
 public class CommandSetFusionEnergy extends ModElementRegistry.ModElement {
     public CommandSetFusionEnergy(ModElementRegistry instance) {
@@ -27,10 +31,14 @@ public class CommandSetFusionEnergy extends ModElementRegistry.ModElement {
         event.registerServerCommand(new CommandHandler());
     }
 
+    /**
+     * Обработчик команды для установки уровня энергии ядра синтеза.
+     * Позволяет администраторам устанавливать произвольные значения энергии в ядре синтеза.
+     */
     public static class CommandHandler implements ICommand {
         @Override
-        public int compareTo(ICommand c) {
-            return getName().compareTo(c.getName());
+        public int compareTo(ICommand command) {
+            return getName().compareTo(command.getName());
         }
 
         @Override
@@ -63,45 +71,47 @@ public class CommandSetFusionEnergy extends ModElementRegistry.ModElement {
             return "/setfusionenergy <energy_value>";
         }
 
+        /**
+         * Выполняет команду установки энергии ядра синтеза.
+         * Проверяет аргументы, валидирует входные данные и устанавливает значение энергии в предмете.
+         *
+         * @param server Сервер Minecraft
+         * @param sender Отправитель команды
+         * @param args   Аргументы команды
+         * @throws CommandException При ошибках выполнения команды
+         */
         @Override
         public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-            // Проверка наличия аргумента
             if (args.length != 1) {
                 throw new CommandException("Использование: " + getUsage(sender));
             }
 
-            // Парсинг значения энергии
             int energyValue;
             try {
                 energyValue = Integer.parseInt(args[0]);
                 if (energyValue < 0) {
                     throw new CommandException("Значение энергии не может быть отрицательным");
                 }
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException exception) {
                 throw new CommandException("Недопустимое числовое значение. Используйте целое число");
             }
 
-            // Получение сущности-отправителя (игрока)
             if (!(sender.getCommandSenderEntity() instanceof EntityPlayer)) {
                 throw new CommandException("Команда может быть выполнена только игроком");
             }
             EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
 
-            // Получение предмета в руке игрока
             ItemStack heldItem = player.getHeldItemMainhand();
 
-            // Проверка, что предмет является fusion core
             if (heldItem.isEmpty() || !heldItem.getItem().getRegistryName().toString().equals("afp:fusion_core")) {
                 throw new CommandException("Вы должны держать fusion core в основной руке");
             }
 
-            // Установка NBT-тега
             if (!heldItem.hasTagCompound()) {
                 heldItem.setTagCompound(new NBTTagCompound());
             }
             heldItem.getTagCompound().setFloat("fusion_depletion", energyValue);
 
-            // Отправка сообщения игроку
             String message = TextFormatting.GREEN + "Установлено значение энергии: " + energyValue + " для fusion core в руке";
             player.sendMessage(new TextComponentString(message));
         }

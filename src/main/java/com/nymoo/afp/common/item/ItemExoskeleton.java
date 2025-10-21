@@ -18,8 +18,15 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * Элемент мода для регистрации предмета экзоскелета.
+ * Предмет используется для размещения экзоскелета в мире как сущности.
+ */
 @ModElementRegistry.ModElement.Tag
 public class ItemExoskeleton extends ModElementRegistry.ModElement {
+    /**
+     * Зарегистрированный предмет экзоскелета
+     */
     @GameRegistry.ObjectHolder("afp:exoskeleton")
     public static final Item itemExoskeleton = null;
 
@@ -32,12 +39,21 @@ public class ItemExoskeleton extends ModElementRegistry.ModElement {
         elements.items.add(() -> new ItemCustom());
     }
 
+    /**
+     * Регистрирует модель предмета экзоскелета для клиентской части.
+     *
+     * @param event Событие регистрации моделей
+     */
     @SideOnly(Side.CLIENT)
     @Override
     public void registerModels(ModelRegistryEvent event) {
         ModelLoader.setCustomModelResourceLocation(itemExoskeleton, 0, new ModelResourceLocation("afp:exoskeleton", "inventory"));
     }
 
+    /**
+     * Пользовательская реализация предмета экзоскелета.
+     * Позволяет размещать экзоскелет в мире при использовании на блоке.
+     */
     public static class ItemCustom extends Item {
         public ItemCustom() {
             setMaxDamage(0);
@@ -47,6 +63,20 @@ public class ItemExoskeleton extends ModElementRegistry.ModElement {
             setCreativeTab(TabEquipment.tab);
         }
 
+        /**
+         * Обрабатывает использование предмета на блоке.
+         * Размещает сущность экзоскелета в мире при соблюдении условий.
+         *
+         * @param player Игрок, использующий предмет
+         * @param world  Мир, в котором используется предмет
+         * @param pos    Позиция блока, на котором используется предмет
+         * @param hand   Рука, в которой находится предмет
+         * @param facing Направление использования
+         * @param hitX   Координата X попадания в блок
+         * @param hitY   Координата Y попадания в блок
+         * @param hitZ   Координата Z попадания в блок
+         * @return Результат использования предмета
+         */
         @Override
         public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
             BlockPos placementPos = pos.offset(facing);

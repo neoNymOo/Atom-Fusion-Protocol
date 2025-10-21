@@ -9,8 +9,19 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import static com.nymoo.afp.common.util.UtilEntityExoskeleton.tryExitExoskeleton;
 
+/**
+ * Обработчик событий смерти существ.
+ * Обеспечивает корректное взаимодействие с экзоскелетом при смерти игрока.
+ */
 @Mod.EventBusSubscriber
 public class HandlerLivingDeathEvent {
+
+    /**
+     * Обрабатывает событие смерти живого существа.
+     * Автоматически выходит из экзоскелета при смерти игрока, если включена соответствующая настройка.
+     *
+     * @param event Событие смерти существа
+     */
     @SubscribeEvent
     public static void onLivingDeathEvent(LivingDeathEvent event) {
         if (!AFPConfig.handlePlayerDeath) return;

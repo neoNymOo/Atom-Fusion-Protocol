@@ -14,6 +14,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Миксин для изменения поведения слотов инвентаря.
+ * Ограничивает возможность снятия силовой брони в зависимости от конфигурации.
+ */
 @Mixin(Slot.class)
 public abstract class MixinSlot {
 
@@ -23,6 +27,12 @@ public abstract class MixinSlot {
     @Shadow
     public abstract ItemStack getStack();
 
+    /**
+     * Внедряется в начало метода canTakeStack для проверки возможности изъятия предмета.
+     * Запрещает снятие силовой брони, если в конфигурации отключена соответствующая опция.
+     *
+     * @param cir Колбэк для возврата результата проверки
+     */
     @Inject(method = "canTakeStack", at = @At("HEAD"), cancellable = true)
     private void onCanTakeStack(CallbackInfoReturnable<Boolean> cir) {
         if (AFPConfig.canPlayerUnequipPowerArmor) return;

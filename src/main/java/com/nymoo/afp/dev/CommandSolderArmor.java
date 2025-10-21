@@ -21,6 +21,10 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Элемент мода для регистрации команды пайки брони экзоскелетов.
+ * Предоставляет административную команду для управления состоянием пайки брони на экзоскелетах.
+ */
 @ModElementRegistry.ModElement.Tag
 public class CommandSolderArmor extends ModElementRegistry.ModElement {
     public CommandSolderArmor(ModElementRegistry instance) {
@@ -32,29 +36,33 @@ public class CommandSolderArmor extends ModElementRegistry.ModElement {
         event.registerServerCommand(new CommandHandler());
     }
 
+    /**
+     * Обработчик команды для управления состоянием пайки брони экзоскелетов.
+     * Позволяет устанавливать или снимать флаг пайки со всех экзоскелетов в радиусе 10 блоков.
+     */
     public static class CommandHandler implements ICommand {
         @Override
-        public int compareTo(ICommand c) {
-            return getName().compareTo(c.getName());
+        public int compareTo(ICommand command) {
+            return getName().compareTo(command.getName());
         }
 
         @Override
-        public boolean checkPermission(MinecraftServer server, ICommandSender var1) {
+        public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
             return true;
         }
 
         @Override
-        public List getAliases() {
-            return new ArrayList();
+        public List<String> getAliases() {
+            return new ArrayList<>();
         }
 
         @Override
-        public List getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) {
-            return new ArrayList();
+        public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos position) {
+            return new ArrayList<>();
         }
 
         @Override
-        public boolean isUsernameIndex(String[] string, int index) {
+        public boolean isUsernameIndex(String[] arguments, int index) {
             return true;
         }
 
@@ -64,18 +72,25 @@ public class CommandSolderArmor extends ModElementRegistry.ModElement {
         }
 
         @Override
-        public String getUsage(ICommandSender var1) {
+        public String getUsage(ICommandSender sender) {
             return "/solderarmor [<arguments>]";
         }
 
+        /**
+         * Выполняет команду управления пайкой брони экзоскелетов.
+         * Изменяет состояние пайки на всех экзоскелетах в радиусе 10 блоков от игрока.
+         *
+         * @param server Сервер Minecraft
+         * @param sender Отправитель команды
+         * @param args   Аргументы команды
+         * @throws CommandException При ошибках выполнения команды
+         */
         @Override
         public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-            // Проверка наличия аргумента
             if (args.length != 1) {
                 throw new CommandException("Использование: " + getUsage(sender));
             }
 
-            // Парсинг значения boolean
             boolean solderValue;
             if (args[0].equalsIgnoreCase("true")) {
                 solderValue = true;
@@ -85,14 +100,12 @@ public class CommandSolderArmor extends ModElementRegistry.ModElement {
                 throw new CommandException("Недопустимое значение. Используйте true или false");
             }
 
-            // Получение сущности-отправителя (игрока)
             Entity senderEntity = sender.getCommandSenderEntity();
             if (!(senderEntity instanceof EntityPlayer)) {
                 throw new CommandException("Команда может быть выполнена только игроком");
             }
             EntityPlayer player = (EntityPlayer) senderEntity;
 
-            // Поиск экзоскелетов в радиусе 10 блоков
             World world = player.world;
             AxisAlignedBB searchArea = new AxisAlignedBB(
                     player.posX - 10, player.posY - 10, player.posZ - 10,
@@ -100,13 +113,11 @@ public class CommandSolderArmor extends ModElementRegistry.ModElement {
             );
 
             int modifiedCount = 0;
-            for (EntityExoskeleton.Exoskeleton exo : world.getEntitiesWithinAABB(
+            for (EntityExoskeleton.Exoskeleton exoskeleton : world.getEntitiesWithinAABB(
                     EntityExoskeleton.Exoskeleton.class, searchArea)) {
 
-                // Получение нагрудника экзоскелета
-                ItemStack chestplate = exo.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+                ItemStack chestplate = exoskeleton.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
                 if (!chestplate.isEmpty()) {
-                    // Установка NBT-тега
                     if (!chestplate.hasTagCompound()) {
                         chestplate.setTagCompound(new NBTTagCompound());
                     }
@@ -115,7 +126,6 @@ public class CommandSolderArmor extends ModElementRegistry.ModElement {
                 }
             }
 
-            // Отправка сообщения игроку
             String message = TextFormatting.GREEN + "Изменено экзоскелетов: " + modifiedCount;
             player.sendMessage(new TextComponentString(message));
         }

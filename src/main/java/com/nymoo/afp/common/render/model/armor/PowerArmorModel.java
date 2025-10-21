@@ -11,13 +11,36 @@ import org.lwjgl.opengl.GL11;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Модель силовой брони для рендеринга кастомных 3D-моделей.
+ * Загружает модели из OBJ-файлов и управляет их отображением с поддержкой кеширования.
+ */
 public class PowerArmorModel extends AbstractArmorModel {
+    /**
+     * Кеш загруженных моделей для оптимизации производительности
+     */
     private static final Map<String, IModelCustom> MODEL_CACHE = new HashMap<>();
+    /**
+     * Кеш загруженных моделей с реактивным ранцем
+     */
     private static final Map<String, IModelCustom> JET_MODEL_CACHE = new HashMap<>();
 
+    /**
+     * Тип силовой брони для определения путей к ресурсам
+     */
     private final String armorType;
+    /**
+     * Флаг наличия варианта модели с реактивным ранцем
+     */
     private final boolean hasJetpackVariant;
 
+    /**
+     * Создает новую модель силовой брони с указанными параметрами.
+     *
+     * @param type              Тип слота брони (0 - голова, 1 - тело, 2 - ноги, 3 - ступни)
+     * @param armorType         Тип брони для загрузки соответствующих ресурсов
+     * @param hasJetpackVariant Наличие варианта с реактивным ранцем
+     */
     public PowerArmorModel(int type, String armorType, boolean hasJetpackVariant) {
         super(type);
         this.armorType = armorType;
@@ -25,6 +48,10 @@ public class PowerArmorModel extends AbstractArmorModel {
         loadModels();
     }
 
+    /**
+     * Загружает модели из файлов и инициализирует рендереры частей брони.
+     * Использует кеширование для избежания повторной загрузки одинаковых моделей.
+     */
     private void loadModels() {
         String key = armorType + "_" + type + (hasJetpackVariant ? "_jet" : "");
 
@@ -48,6 +75,18 @@ public class PowerArmorModel extends AbstractArmorModel {
         rightFoot = new ModelRendererObj(model, "RightBoot").setRotationPoint(-1.9F, 12.0F, 0.0F);
     }
 
+    /**
+     * Отрисовывает модель силовой брони с учетом типа слота и состояния сущности.
+     * Управляет трансформациями, привязкой текстур и рендерингом соответствующих частей модели.
+     *
+     * @param entity          Сущность для рендеринга
+     * @param limbSwing       Взмах конечностей для анимации
+     * @param limbSwingAmount Интенсивность взмаха конечностей
+     * @param ageInTicks      Время существования сущности в тиках
+     * @param headYaw         Угол поворота головы по горизонтали
+     * @param headPitch       Угол поворота головы по вертикали
+     * @param scale           Масштабный коэффициент рендеринга
+     */
     @Override
     public void render(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch, float scale) {
         setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, headYaw, headPitch, scale, entity);
