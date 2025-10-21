@@ -1,7 +1,5 @@
 package com.nymoo.afp.common.item;
 
-import com.hbm.items.tool.ItemGeigerCounter;
-import com.nymoo.afp.AtomFusionProtocol;
 import com.nymoo.afp.ModElementRegistry;
 import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;

@@ -2,6 +2,8 @@ package com.nymoo.afp.common.handler;
 
 import com.nymoo.afp.AtomFusionProtocol;
 import com.nymoo.afp.ModDataSyncManager;
+import com.nymoo.afp.ModElementRegistry;
+import com.nymoo.afp.Tags;
 import com.nymoo.afp.common.entity.EntityExoskeleton;
 import com.nymoo.afp.common.item.IPowerArmor;
 import com.nymoo.afp.common.item.ItemFusionCore;
@@ -52,10 +54,6 @@ public class HandlerClientTickEvent {
 
     // Задержка между установкой и снятием fusion_core (в секундах)
     public static final float FUSION_COOLDOWN = 1.0F;
-
-    // Звуковые события для различных процессов взаимодействия
-    private static final SoundEvent FUSION_SOUND = new SoundEvent(new ResourceLocation("afp", "fusion_core_in_out"));
-    private static final SoundEvent ARMOR_SOUND = new SoundEvent(new ResourceLocation("afp", "power_armor_in_out"));
 
     // Регулировка громкости звуков (от 0.0F до 1.0F или выше, в зависимости от нужного уровня)
     public static float FUSION_VOLUME = 1.0F; // Громкость для звуков fusion
@@ -337,15 +335,9 @@ public class HandlerClientTickEvent {
         soundY = y;
         soundZ = z;
 
-        SoundEvent soundToPlay;
-        float volume;
-        if (mode == 0 || mode == 1) {
-            soundToPlay = FUSION_SOUND;
-            volume = FUSION_VOLUME;
-        } else {
-            soundToPlay = ARMOR_SOUND;
-            volume = ARMOR_VOLUME;
-        }
+        String soundName = (mode == 0 || mode == 1) ? "fusion_core_in_out" : "power_armor_in_out";
+        SoundEvent soundToPlay = ModElementRegistry.getSound(new ResourceLocation(Tags.MOD_ID, soundName));
+        float volume = (mode == 0 || mode == 1) ? FUSION_VOLUME : ARMOR_VOLUME;
 
         if (currentSound == null || !mc.getSoundHandler().isSoundPlaying(currentSound)) {
             currentSound = new LoadingSound(soundToPlay, (float) x, (float) y, (float) z, volume);

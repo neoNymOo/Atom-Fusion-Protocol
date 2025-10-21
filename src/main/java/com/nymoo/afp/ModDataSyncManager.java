@@ -16,6 +16,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
@@ -26,6 +27,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
+
+import java.util.List;
 
 /**
  * Управляет синхронизацией мод-специфических данных между клиентом и сервером.
@@ -396,9 +399,8 @@ public class ModDataSyncManager {
             public IMessage onMessage(StartSoundMessage message, MessageContext ctx) {
                 EntityPlayerMP player = ctx.getServerHandler().player;
                 player.getServerWorld().addScheduledTask(() -> {
-                    SoundEvent sound = (message.mode == 0 || message.mode == 1)
-                            ? new SoundEvent(new ResourceLocation("afp", "fusion_core_in_out"))
-                            : new SoundEvent(new ResourceLocation("afp", "power_armor_in_out"));
+                    String soundName = (message.mode == 0 || message.mode == 1) ? "fusion_core_in_out" : "power_armor_in_out";
+                    SoundEvent sound = ModElementRegistry.getSound(new ResourceLocation(Tags.MOD_ID, soundName));
                     float volume = 1.0F; // Громкость по умолчанию, совпадает с клиентскими значениями
                     World world = player.world;
                     world.playSound(player, message.x, message.y, message.z, sound, SoundCategory.PLAYERS, volume, 1.0F);
@@ -446,25 +448,27 @@ public class ModDataSyncManager {
 
         /**
          * Обработчик сообщения на сервере.
-         * Рассылает广播 сообщение об остановке звука ближайшим игрокам.
+         * Рассылает сообщение об остановке звука ближайшим игрокам, исключая отправителя.
          */
         public static class Handler implements IMessageHandler<StopSoundMessage, IMessage> {
             @Override
             public IMessage onMessage(StopSoundMessage message, MessageContext ctx) {
                 EntityPlayerMP player = ctx.getServerHandler().player;
                 player.getServerWorld().addScheduledTask(() -> {
-                    String soundName = (message.mode == 0 || message.mode == 1)
-                            ? "afp:fusion_core_in_out"
-                            : "afp:power_armor_in_out";
+                    String soundName = Tags.MOD_ID + ":" + ((message.mode == 0 || message.mode == 1)
+                            ? "fusion_core_in_out"
+                            : "power_armor_in_out");
                     String categoryName = SoundCategory.PLAYERS.getName();
-                    NetworkRegistry.TargetPoint targetPoint = new NetworkRegistry.TargetPoint(
-                            player.world.provider.getDimension(),
-                            message.x,
-                            message.y,
-                            message.z,
-                            32.0D // Диапазон рассылки (в блоках), достаточный для звука
-                    );
-                    INTERACT_NETWORK.sendToAllAround(new StopSoundBroadcast(soundName, categoryName), targetPoint);
+                    double range = 32.0D;
+                    AxisAlignedBB aabb = new AxisAlignedBB(message.x - range, message.y - range, message.z - range,
+                            message.x + range, message.y + range, message.z + range);
+                    List<EntityPlayerMP> players = player.world.getEntitiesWithinAABB(EntityPlayerMP.class, aabb);
+                    StopSoundBroadcast broadcast = new StopSoundBroadcast(soundName, categoryName);
+                    for (EntityPlayerMP p : players) {
+                        if (p != player) {
+                            INTERACT_NETWORK.sendTo(broadcast, p);
+                        }
+                    }
                 });
                 return null;
             }

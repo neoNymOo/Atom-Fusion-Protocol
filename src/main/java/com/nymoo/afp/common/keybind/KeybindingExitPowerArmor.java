@@ -17,11 +17,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
 
 /**
- * Registers and handles the keybinding for exiting power armor.
- * Sends network message to server when pressed (hold handled in HandlerClientTickEvent).
+ * Класс регистрирует и обрабатывает клавишу для выхода из силовой брони.
+ * Отправляет сообщение на сервер при нажатии.
  */
 @ModElementRegistry.ModElement.Tag
 public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
+    // Клавиша выхода.
     public static KeyBinding keys;
 
     public KeybindingExitPowerArmor(ModElementRegistry instance) {
@@ -42,21 +43,19 @@ public class KeybindingExitPowerArmor extends ModElementRegistry.ModElement {
     }
 
     /**
-     * Network message for exit key press (completion handled via hold in tick event).
+     * Сообщение о нажатии клавиши.
      */
     public static class KeyBindingPressedMessage implements IMessage {
         @Override
-        public void toBytes(ByteBuf buf) {
-        }
+        public void toBytes(ByteBuf buf) {}
 
         @Override
-        public void fromBytes(ByteBuf buf) {
-        }
+        public void fromBytes(ByteBuf buf) {}
     }
 
     /**
-     * Handler for exit key message on server.
-     * Calls tryExitExoskeleton in UtilEntityExoskeleton.
+     * Обработчик сообщения на сервере.
+     * Вызывает выход из экзоскелета.
      */
     public static class KeyBindingPressedMessageHandler implements IMessageHandler<KeyBindingPressedMessage, IMessage> {
         @Override
