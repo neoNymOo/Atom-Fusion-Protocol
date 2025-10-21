@@ -1,9 +1,7 @@
 # Changelog
 
-## [2.0.0] - 2025-18-10
+## [2.0.0] - 2025-21-10
 
 ### Added
-- Fixed an issue where the game would crash when trying to enter power armor with the armor on
-- Fixed a bug where the player could exit power armor while jumping or walking
-- The player's interaction logic with power armor has been optimized
-- Now other players can remove the nuclear block from other players' armor
+- Updated sounds for installing/deleting the fusion core and entering/exiting power armor
+- Added client-server synchronization for playing the above sounds

@@ -1,6 +1,7 @@
 package com.nymoo.afp;
 
 import com.nymoo.afp.common.entity.EntityExoskeleton;
+import com.nymoo.afp.common.item.IPowerArmor;
 import com.nymoo.afp.common.item.ItemFusionCore;
 import com.nymoo.afp.common.util.UtilEntityExoskeleton;
 import io.netty.buffer.ByteBuf;
@@ -12,6 +13,9 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
@@ -24,25 +28,28 @@ import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 
 /**
- * Manages synchronization of mod-specific data between client and server.
- * Handles world saved data for map-wide and dimension-specific variables.
- * Also manages network messages for interactions with exoskeleton entities.
- * Extended to support interactions with other players for fusion core operations.
+ * Управляет синхронизацией мод-специфических данных между клиентом и сервером.
+ * Обрабатывает сохраненные данные мира для переменных уровня карты и измерения.
+ * Также управляет сетевыми сообщениями для взаимодействий с сущностями экзоскелета.
+ * Расширен для поддержки взаимодействий с другими игроками для операций с ядрами fusion.
  */
 public class ModDataSyncManager {
     /**
-     * Network wrapper for exoskeleton interaction messages.
-     * Registered in static initializer.
+     * Обертка сети для сообщений взаимодействия с экзоскелетом.
+     * Регистрируется в статическом инициализаторе.
      */
     public static final SimpleNetworkWrapper INTERACT_NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel("afp_interact");
 
     static {
         INTERACT_NETWORK.registerMessage(InteractMessage.Handler.class, InteractMessage.class, 0, Side.SERVER);
+        INTERACT_NETWORK.registerMessage(StartSoundMessage.Handler.class, StartSoundMessage.class, 1, Side.SERVER);
+        INTERACT_NETWORK.registerMessage(StopSoundMessage.Handler.class, StopSoundMessage.class, 2, Side.SERVER);
+        INTERACT_NETWORK.registerMessage(StopSoundBroadcast.Handler.class, StopSoundBroadcast.class, 3, Side.CLIENT);
     }
 
     /**
-     * Abstract base class for synchronized world data.
-     * Provides methods to mark data dirty and sync across network.
+     * Абстрактный базовый класс для синхронизированных данных мира.
+     * Предоставляет методы для пометки данных как грязных и синхронизации по сети.
      */
     public static abstract class SyncedWorldData extends WorldSavedData {
         private final int type;
@@ -53,10 +60,10 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Synchronizes the data across the network.
-         * If on client, sends to server; if on server, broadcasts to all or dimension.
+         * Синхронизирует данные по сети.
+         * Если на клиенте, отправляет на сервер; если на сервере, рассылает всем или в измерение.
          *
-         * @param world The world context for synchronization.
+         * @param world Контекст мира для синхронизации.
          */
         public void syncData(World world) {
             markDirty();
@@ -73,12 +80,12 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Map-wide variables that are synced across all dimensions.
+     * Переменные уровня карты, синхронизируемые по всем измерениям.
      */
     public static class MapVariables extends SyncedWorldData {
         public static final String DATA_NAME = Tags.MOD_ID + "_map";
 
-        // Конструктор, который ожидает Minecraft при загрузке данных
+        // Конструктор, ожидаемый Minecraft при загрузке данных
         public MapVariables(String mapName) {
             super(mapName, 0);
         }
@@ -88,10 +95,10 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Retrieves or creates the MapVariables instance for the world.
+         * Получает или создает экземпляр MapVariables для мира.
          *
-         * @param world The world to get variables for.
-         * @return The MapVariables instance.
+         * @param world Мир, для которого получить переменные.
+         * @return Экземпляр MapVariables.
          */
         public static MapVariables get(World world) {
             MapVariables instance = (MapVariables) world.getMapStorage().getOrLoadData(MapVariables.class, DATA_NAME);
@@ -104,21 +111,23 @@ public class ModDataSyncManager {
 
         @Override
         public void readFromNBT(NBTTagCompound nbt) {
+            // Здесь можно добавить чтение специфических данных, если нужно
         }
 
         @Override
         public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+            // Здесь можно добавить запись специфических данных, если нужно
             return nbt;
         }
     }
 
     /**
-     * Dimension-specific variables that are synced within the dimension.
+     * Переменные специфичные для измерения, синхронизируемые в пределах измерения.
      */
     public static class WorldVariables extends SyncedWorldData {
         public static final String DATA_NAME = Tags.MOD_ID + "_world";
 
-        // Конструктор, который ожидает Minecraft при загрузке данных
+        // Конструктор, ожидаемый Minecraft при загрузке данных
         public WorldVariables(String mapName) {
             super(mapName, 1);
         }
@@ -128,10 +137,10 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Retrieves or creates the WorldVariables instance for the world.
+         * Получает или создает экземпляр WorldVariables для мира.
          *
-         * @param world The world to get variables for.
-         * @return The WorldVariables instance.
+         * @param world Мир, для которого получить переменные.
+         * @return Экземпляр WorldVariables.
          */
         public static WorldVariables get(World world) {
             WorldVariables instance = (WorldVariables) world.getMapStorage().getOrLoadData(WorldVariables.class, DATA_NAME);
@@ -144,17 +153,19 @@ public class ModDataSyncManager {
 
         @Override
         public void readFromNBT(NBTTagCompound nbt) {
+            // Здесь можно добавить чтение специфических данных, если нужно
         }
 
         @Override
         public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+            // Здесь можно добавить запись специфических данных, если нужно
             return nbt;
         }
     }
 
     /**
-     * Handler for world saved data synchronization messages.
-     * Processes messages on both client and server sides.
+     * Обработчик сообщений синхронизации сохраненных данных мира.
+     * Обрабатывает сообщения на сторонах клиента и сервера.
      */
     public static class WorldSavedDataSyncMessageHandler implements IMessageHandler<WorldSavedDataSyncMessage, IMessage> {
         @Override
@@ -169,11 +180,11 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Synchronizes the received data.
-         * On server, marks dirty and broadcasts; on client, sets data.
+         * Синхронизирует полученные данные.
+         * На сервере помечает грязными и рассылает; на клиенте устанавливает данные.
          *
-         * @param message The sync message.
-         * @param context The message context.
+         * @param message Сообщение синхронизации.
+         * @param context Контекст сообщения.
          */
         private void syncData(WorldSavedDataSyncMessage message, MessageContext context) {
             World world = context.side == Side.SERVER
@@ -195,7 +206,7 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Network message for synchronizing world saved data.
+     * Сетевое сообщение для синхронизации сохраненных данных мира.
      */
     public static class WorldSavedDataSyncMessage implements IMessage {
         public int type;
@@ -210,13 +221,13 @@ public class ModDataSyncManager {
         }
 
         @Override
-        public void toBytes(io.netty.buffer.ByteBuf buf) {
+        public void toBytes(ByteBuf buf) {
             buf.writeInt(type);
             ByteBufUtils.writeTag(buf, data.writeToNBT(new NBTTagCompound()));
         }
 
         @Override
-        public void fromBytes(io.netty.buffer.ByteBuf buf) {
+        public void fromBytes(ByteBuf buf) {
             type = buf.readInt();
             NBTTagCompound nbt = ByteBufUtils.readTag(buf);
             if (type == 0) {
@@ -229,8 +240,8 @@ public class ModDataSyncManager {
     }
 
     /**
-     * Network message for exoskeleton interactions (install/uninstall fusion core, enter).
-     * Sent from client to server when hold action completes.
+     * Сетевое сообщение для взаимодействий с экзоскелетом (установка/удаление ядер fusion, вход).
+     * Отправляется с клиента на сервер при завершении удержания.
      */
     public static class InteractMessage implements IMessage {
         private int type;
@@ -262,9 +273,9 @@ public class ModDataSyncManager {
         }
 
         /**
-         * Handler for interaction messages on server.
-         * Validates conditions and calls appropriate UtilEntityExoskeleton methods.
-         * Supports both exoskeleton entities and other players for fusion core actions.
+         * Обработчик сообщений взаимодействий на сервере.
+         * Валидирует условия и вызывает соответствующие методы UtilEntityExoskeleton.
+         * Поддерживает как сущности экзоскелета, так и других игроков для действий с ядрами fusion.
          */
         public static class Handler implements IMessageHandler<InteractMessage, IMessage> {
             @Override
@@ -277,6 +288,7 @@ public class ModDataSyncManager {
                         return;
                     }
 
+                    // Валидация расстояния и поворота
                     double distanceSq = player.getDistanceSq(entity);
                     if (distanceSq > 1.0D) {
                         return;
@@ -290,8 +302,8 @@ public class ModDataSyncManager {
                     ItemStack heldItem = player.getHeldItem(EnumHand.MAIN_HAND);
                     if (entity instanceof EntityExoskeleton.Exoskeleton) {
                         EntityExoskeleton.Exoskeleton exo = (EntityExoskeleton.Exoskeleton) entity;
+                        ItemStack chest = exo.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
                         if (message.type == 0 || message.type == 1) {
-                            ItemStack chest = exo.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
                             NBTTagCompound tag = chest.getTagCompound();
                             boolean hasEnergy = tag != null && tag.hasKey("fusion_depletion");
 
@@ -315,10 +327,7 @@ public class ModDataSyncManager {
                     } else if (entity instanceof EntityPlayer && entity != player && (message.type == 0 || message.type == 1)) {
                         EntityPlayer target = (EntityPlayer) entity;
                         ItemStack chest = target.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-                        if (chest.isEmpty() || !(chest.getItem() instanceof com.nymoo.afp.common.item.IPowerArmor)) {
-                            return;
-                        }
-                        if (message.slot != EntityEquipmentSlot.CHEST) {
+                        if (chest.isEmpty() || !(chest.getItem() instanceof IPowerArmor) || message.slot != EntityEquipmentSlot.CHEST) {
                             return;
                         }
                         NBTTagCompound tag = chest.getTagCompound();
@@ -336,6 +345,170 @@ public class ModDataSyncManager {
                             UtilEntityExoskeleton.tryUninstallFusionCoreFromPlayer(world, player, EnumHand.MAIN_HAND, target);
                         }
                     }
+                });
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Сетевое сообщение для начала воспроизведения звука на сервере (для других игроков).
+     * Отправляется с клиента на сервер при начале удержания.
+     */
+    public static class StartSoundMessage implements IMessage {
+        private int mode;
+        private double x;
+        private double y;
+        private double z;
+
+        public StartSoundMessage() {
+        }
+
+        public StartSoundMessage(int mode, double x, double y, double z) {
+            this.mode = mode;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf) {
+            mode = buf.readInt();
+            x = buf.readDouble();
+            y = buf.readDouble();
+            z = buf.readDouble();
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf) {
+            buf.writeInt(mode);
+            buf.writeDouble(x);
+            buf.writeDouble(y);
+            buf.writeDouble(z);
+        }
+
+        /**
+         * Обработчик сообщения на сервере.
+         * Воспроизводит звук для всех игроков кроме отправителя.
+         */
+        public static class Handler implements IMessageHandler<StartSoundMessage, IMessage> {
+            @Override
+            public IMessage onMessage(StartSoundMessage message, MessageContext ctx) {
+                EntityPlayerMP player = ctx.getServerHandler().player;
+                player.getServerWorld().addScheduledTask(() -> {
+                    SoundEvent sound = (message.mode == 0 || message.mode == 1)
+                            ? new SoundEvent(new ResourceLocation("afp", "fusion_core_in_out"))
+                            : new SoundEvent(new ResourceLocation("afp", "power_armor_in_out"));
+                    float volume = 1.0F; // Громкость по умолчанию, совпадает с клиентскими значениями
+                    World world = player.world;
+                    world.playSound(player, message.x, message.y, message.z, sound, SoundCategory.PLAYERS, volume, 1.0F);
+                });
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Сетевое сообщение для остановки звука на сервере (для других игроков).
+     * Отправляется с клиента на сервер при прерывании удержания.
+     */
+    public static class StopSoundMessage implements IMessage {
+        private int mode;
+        private double x;
+        private double y;
+        private double z;
+
+        public StopSoundMessage() {
+        }
+
+        public StopSoundMessage(int mode, double x, double y, double z) {
+            this.mode = mode;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf) {
+            mode = buf.readInt();
+            x = buf.readDouble();
+            y = buf.readDouble();
+            z = buf.readDouble();
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf) {
+            buf.writeInt(mode);
+            buf.writeDouble(x);
+            buf.writeDouble(y);
+            buf.writeDouble(z);
+        }
+
+        /**
+         * Обработчик сообщения на сервере.
+         * Рассылает广播 сообщение об остановке звука ближайшим игрокам.
+         */
+        public static class Handler implements IMessageHandler<StopSoundMessage, IMessage> {
+            @Override
+            public IMessage onMessage(StopSoundMessage message, MessageContext ctx) {
+                EntityPlayerMP player = ctx.getServerHandler().player;
+                player.getServerWorld().addScheduledTask(() -> {
+                    String soundName = (message.mode == 0 || message.mode == 1)
+                            ? "afp:fusion_core_in_out"
+                            : "afp:power_armor_in_out";
+                    String categoryName = SoundCategory.PLAYERS.getName();
+                    NetworkRegistry.TargetPoint targetPoint = new NetworkRegistry.TargetPoint(
+                            player.world.provider.getDimension(),
+                            message.x,
+                            message.y,
+                            message.z,
+                            32.0D // Диапазон рассылки (в блоках), достаточный для звука
+                    );
+                    INTERACT_NETWORK.sendToAllAround(new StopSoundBroadcast(soundName, categoryName), targetPoint);
+                });
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Сетевое сообщение для остановки звука на клиенте.
+     * Отправляется с сервера на клиентов для остановки звука.
+     */
+    public static class StopSoundBroadcast implements IMessage {
+        private String soundName;
+        private String categoryName;
+
+        public StopSoundBroadcast() {
+        }
+
+        public StopSoundBroadcast(String soundName, String categoryName) {
+            this.soundName = soundName;
+            this.categoryName = categoryName;
+        }
+
+        @Override
+        public void fromBytes(ByteBuf buf) {
+            soundName = ByteBufUtils.readUTF8String(buf);
+            categoryName = ByteBufUtils.readUTF8String(buf);
+        }
+
+        @Override
+        public void toBytes(ByteBuf buf) {
+            ByteBufUtils.writeUTF8String(buf, soundName);
+            ByteBufUtils.writeUTF8String(buf, categoryName);
+        }
+
+        /**
+         * Обработчик сообщения на клиенте.
+         * Останавливает указанный звук.
+         */
+        public static class Handler implements IMessageHandler<StopSoundBroadcast, IMessage> {
+            @Override
+            public IMessage onMessage(StopSoundBroadcast message, MessageContext ctx) {
+                Minecraft.getMinecraft().addScheduledTask(() -> {
+                    SoundCategory category = SoundCategory.getByName(message.categoryName);
+                    Minecraft.getMinecraft().getSoundHandler().stop(message.soundName, category);
                 });
                 return null;
             }

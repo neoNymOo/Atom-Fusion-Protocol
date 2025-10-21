@@ -37,7 +37,7 @@ public class ModElementRegistry implements IFuelHandler, IWorldGenerator {
     private static final Map<ResourceLocation, SoundEvent> SOUNDS = new HashMap<>();
 
     static {
-        Arrays.asList("exo_click", "servo_step1", "servo_step2", "servo_step3", "fusion_core", "wrench", "switch_click", "poweron", "fusion_core_interact")
+        Arrays.asList("exo_click", "servo_step1", "servo_step2", "servo_step3", "fusion_core", "wrench", "switch_click", "poweron", "fusion_core_in_out", "power_armor_in_out")
                 .forEach(name -> SOUNDS.put(
                         new ResourceLocation(Tags.MOD_ID, name),
                         new SoundEvent(new ResourceLocation(Tags.MOD_ID, name))

@@ -8,11 +8,20 @@
       }
     ]
   },
-  "fusion_core_interact": {
+  "fusion_core_in_out": {
     "category": "player",
     "sounds": [
       {
-        "name": "afp:fusion_core_interact",
+        "name": "afp:fusion_core_in_out",
+        "stream": false
+      }
+    ]
+  },
+  "power_armor_in_out": {
+    "category": "player",
+    "sounds": [
+      {
+        "name": "afp:power_armor_in_out",
         "stream": false
       }
     ]
