@@ -33,9 +33,9 @@ public class AFPConfig {
     public static float exoskeletonHitboxHeight = 2.0F;
     public static float powerArmorSpeedMultiplier = 0.85F;
     public static float servoVolume = 0.55F;
-    public static float powerArmorKnockbackMultiplier = 0.0F;
     public static float powerArmorFallDamageMultiplier = 0.2F;
     public static float powerArmorFallThreshold = 14.0F;
+    public static float knockbackDamageScale = 20.0F;
 
     // Настройки энергопотребления
     public static float maxDepletion = 288000f;
@@ -52,7 +52,7 @@ public class AFPConfig {
     /**
      * Получает набор характеристик брони по имени.
      *
-     * @param name Имя набора брони (например, "x-03", "t-60")
+     * @param name Имя набора брони (например, "x03", "t60")
      * @return Набор характеристик брони или null если не найден
      */
     public static ArmorSet getArmorSet(String name) {
@@ -83,9 +83,9 @@ public class AFPConfig {
                 "exoskeleton_hitbox_width",
                 "exoskeleton_hitbox_height",
                 "power_armor_speed_multiplier",
-                "power_armor_knockback_multiplier",
                 "power_armor_fall_damage_multiplier",
                 "power_armor_fall_threshold",
+                "power_armor_knockback_damage_scale",
                 "max_depletion",
                 "step_delta_threshold",
                 "base_depletion_rate",
@@ -98,25 +98,25 @@ public class AFPConfig {
                 "walk_depletion_adder"
         ));
 
-        config.setCategoryComment(CATEGORY_POWER_ARMOR, "Property format: helmet_protection, chestplate_protection, leggings_protection, boots_protection, durability, enchantability, toughness");
+        config.setCategoryComment(CATEGORY_POWER_ARMOR, "Property format: helmet_protection, chestplate_protection, leggings_protection, boots_protection, durability, enchantability, toughness, knockback_multiplier");
         config.setCategoryPropertyOrder(CATEGORY_POWER_ARMOR, Arrays.asList(
-                "x-03",
-                "x-02",
-                "x-01",
-                "t-60",
-                "t-51",
-                "t-45",
+                "x03",
+                "x02",
+                "x01",
+                "t60",
+                "t51",
+                "t45",
                 "exo"
         ));
 
         // Загрузка характеристик наборов брони
-        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x-03", "3, 7, 5, 2, 350, 12, 3.2");
-        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x-02", "2, 8, 6, 3, 420, 8, 2.7");
-        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x-01", "4, 9, 4, 1, 280, 15, 4.1");
-        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t-60", "3, 6, 5, 2, 380, 9, 3.8");
-        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t-51", "2, 7, 4, 3, 320, 11, 2.9");
-        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t-45", "4, 8, 6, 2, 450, 7, 3.5");
-        loadArmorSet(config, CATEGORY_POWER_ARMOR, "exo", "3, 9, 5, 1, 500, 14, 4.3");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x03", "3, 7, 5, 2, 350, 12, 3.2, 0.05");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x02", "2, 8, 6, 3, 420, 8, 2.7, 0.10");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "x01", "4, 9, 4, 1, 280, 15, 4.1, 0.15");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t60", "3, 6, 5, 2, 380, 9, 3.8, 0.20");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t51", "2, 7, 4, 3, 320, 11, 2.9, 0.25");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "t45", "4, 8, 6, 2, 450, 7, 3.5, 0.30");
+        loadArmorSet(config, CATEGORY_POWER_ARMOR, "exo", "3, 9, 5, 1, 500, 14, 4.3, 0.40");
 
         // Загрузка общих настроек
         playServoJumpSound = config.getBoolean("play_servo_jump_sound", CATEGORY_GENERAL, true, "Should servo sounds play when the player jumps while wearing power armor?");
@@ -130,9 +130,9 @@ public class AFPConfig {
         exoskeletonHitboxWidth = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_width", 0.65f, "Exoskeleton hitbox width. [default: 0.65]").getDouble();
         exoskeletonHitboxHeight = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_height", 2.0f, "Exoskeleton hitbox height. [default: 2.0]").getDouble();
         powerArmorSpeedMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_speed_multiplier", 0.85f, "The player's speed multiplier when wearing power armor is multiplied by the player's current speed. [default: 0.85]").getDouble();
-        powerArmorKnockbackMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_knockback_multiplier", 0.0f, "The discard force multiplier when hitting a player in power armor is multiplied by the current discard force. [default: 0.0]").getDouble();
         powerArmorFallDamageMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_fall_damage_multiplier", 0.2f, "Multiplier for fall damage when wearing power armor. [default: 0.2]").getDouble();
         powerArmorFallThreshold = (float) config.get(CATEGORY_GENERAL, "power_armor_fall_threshold", 14.0f, "The fall height threshold before the player starts taking fall damage. [default: 14.0]").getDouble();
+        knockbackDamageScale = (float) config.get(CATEGORY_GENERAL, "power_armor_knockback_damage_scale", 20.0f, "Damage scale for calculating knockback multiplier in power armor. Higher values reduce knockback sensitivity to damage. [default: 20.0]").getDouble();
         maxDepletion = (float) config.get(CATEGORY_GENERAL, "max_depletion", 288000.0, "Maximum fusion depletion value for power armor energy management. [default: 288000.0]").getDouble();
         stepDeltaThreshold = (float) config.get(CATEGORY_GENERAL, "step_delta_threshold", 0.06, "Threshold for detecting horizontal movement in energy depletion calculation. [default: 0.06]").getDouble();
         baseDepletionRate = (float) config.get(CATEGORY_GENERAL, "base_depletion_rate", 1.0, "Base rate for power armor energy depletion. [default: 1.0]").getDouble();
@@ -169,8 +169,8 @@ public class AFPConfig {
      */
     private static ArmorSet parseArmorSet(String value) {
         String[] parts = value.split(",");
-        if (parts.length != 7) {
-            throw new IllegalArgumentException("Invalid armor set configuration: expected 7 comma-separated values.");
+        if (parts.length != 8) {
+            throw new IllegalArgumentException("Invalid armor set configuration: expected 8 comma-separated values.");
         }
         ArmorSet set = new ArmorSet();
         set.helmetProtection = Integer.parseInt(parts[0].trim());
@@ -180,6 +180,7 @@ public class AFPConfig {
         set.durability = Integer.parseInt(parts[4].trim());
         set.enchantability = Integer.parseInt(parts[5].trim());
         set.toughness = Float.parseFloat(parts[6].trim());
+        set.knockbackMultiplier = Float.parseFloat(parts[7].trim());
         return set;
     }
 
@@ -216,5 +217,9 @@ public class AFPConfig {
          * Жёсткость брони
          */
         public float toughness;
+        /**
+         * Множитель отбрасывания для этого типа брони
+         */
+        public float knockbackMultiplier;
     }
 }

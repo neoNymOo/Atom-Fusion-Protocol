@@ -57,7 +57,7 @@ public class ArmorT60 extends ModElementRegistry.ModElement {
 
     @Override
     public void initElements() {
-        AFPConfig.ArmorSet config = AFPConfig.getArmorSet("T-60");
+        AFPConfig.ArmorSet config = AFPConfig.getArmorSet("T60");
 
         ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial(
                 "t60",

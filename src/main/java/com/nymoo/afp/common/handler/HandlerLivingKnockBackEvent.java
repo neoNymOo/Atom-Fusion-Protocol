@@ -11,25 +11,28 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
  * Обработчик событий отбрасывания существ.
- * Управляет модификацией отбрасывания для игроков в силовой броне.
+ * Уменьшает силу отбрасывания для игроков в силовой броне согласно конфигурации.
  */
 @Mod.EventBusSubscriber
 public class HandlerLivingKnockBackEvent {
 
-    /**
-     * Обрабатывает событие отбрасывания живого существа.
-     * Уменьшает силу отбрасывания для игроков в силовой броне согласно конфигурации.
-     *
-     * @param event Событие отбрасывания существа
-     */
     @SubscribeEvent
-    public static void onHandlerLivingKnockBackEvent(LivingKnockBackEvent event) {
+    public static void onLivingKnockBack(LivingKnockBackEvent event) {
         if (event.getEntity() instanceof EntityPlayer) {
             EntityPlayer player = (EntityPlayer) event.getEntity();
             ItemStack chestplateStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
 
             if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
-                event.setStrength(event.getStrength() * AFPConfig.powerArmorKnockbackMultiplier);
+                String type = ((IPowerArmor) chestplateStack.getItem()).getPowerArmorType();
+                AFPConfig.ArmorSet set = AFPConfig.getArmorSet(type);
+
+                if (set != null) {
+                    float armorMult = set.knockbackMultiplier;
+                    float damage = HandlerLivingDamageEvent.getAndRemoveDamage(player);
+                    float damageMult = damage / AFPConfig.knockbackDamageScale;
+                    float finalMult = armorMult * damageMult;
+                    event.setStrength(event.getOriginalStrength() * finalMult);
+                }
             }
         }
     }

@@ -57,7 +57,7 @@ public class ArmorX02 extends ModElementRegistry.ModElement {
 
     @Override
     public void initElements() {
-        AFPConfig.ArmorSet config = AFPConfig.getArmorSet("X-02");
+        AFPConfig.ArmorSet config = AFPConfig.getArmorSet("X02");
 
         ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial(
                 "x02",
