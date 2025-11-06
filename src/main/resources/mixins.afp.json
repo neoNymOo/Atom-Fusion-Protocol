@@ -11,7 +11,8 @@
     "MixinEntityPlayer",
     "MixinEntity",
     "MixinEntityLivingBase",
-    "EntityAccessor"
+    "EntityAccessor",
+    "MixinRenderLivingBase"
   ],
   "client": [
     "MixinModelBiped"

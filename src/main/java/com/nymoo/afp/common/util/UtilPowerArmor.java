@@ -13,6 +13,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+
 /**
  * Утилитарный класс для управления звуками шагов и энергопотреблением силовой брони.
  * Содержит методы для воспроизведения звуков сервоприводов и расчета расхода энергии.
@@ -22,7 +23,7 @@ public class UtilPowerArmor {
      * Обрабатывает воспроизведение звуков шагов сервоприводов силовой брони.
      * Определяет момент шага и воспроизводит случайный звук сервопривода.
      *
-     * @param world Мир, в котором находится игрок
+     * @param world  Мир, в котором находится игрок
      * @param player Игрок в силовой броне
      */
     public static void handleStepSound(World world, EntityPlayer player) {
@@ -45,14 +46,15 @@ public class UtilPowerArmor {
         }
         entityData.setFloat("afp_nextStepDistance", nextStepDistance);
     }
+
     /**
      * Воспроизводит случайный звук шага сервопривода в указанных координатах.
      * Выбирает один из трех доступных звуков шага с заданной громкостью.
      *
      * @param world Мир для воспроизведения звука
-     * @param x Координата X воспроизведения звука
-     * @param y Координата Y воспроизведения звука
-     * @param z Координата Z воспроизведения звука
+     * @param x     Координата X воспроизведения звука
+     * @param y     Координата Y воспроизведения звука
+     * @param z     Координата Z воспроизведения звука
      */
     public static void playServoStepSound(World world, double x, double y, double z) {
         SoundEvent[] servoSounds = {
@@ -63,12 +65,13 @@ public class UtilPowerArmor {
         int soundIndex = (int) (Math.random() * servoSounds.length);
         world.playSound(null, x, y, z, servoSounds[soundIndex], SoundCategory.PLAYERS, AFPConfig.servoVolume, 1.0f);
     }
+
     /**
      * Обрабатывает логику расхода энергии силовой брони на основе действий игрока.
      * Учитывает различные факторы: бег, прыжки, нахождение в воде, использование предметов и т.д.
      *
-     * @param world Мир, в котором находится игрок
-     * @param player Игрок в силовой броне
+     * @param world     Мир, в котором находится игрок
+     * @param player    Игрок в силовой броне
      * @param itemStack Предмет силовой брони для обновления уровня энергии
      */
     public static void handleEnergyDepletion(World world, EntityPlayer player, ItemStack itemStack) {
