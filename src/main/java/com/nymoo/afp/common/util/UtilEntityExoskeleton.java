@@ -1,9 +1,11 @@
 package com.nymoo.afp.common.util;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.entity.EntityExoskeleton;
 import com.nymoo.afp.common.item.ArmorExo;
 import com.nymoo.afp.common.item.IPowerArmor;
 import com.nymoo.afp.common.item.ItemFusionCore;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemArmor;
@@ -19,8 +21,10 @@ import java.util.EnumSet;
 /**
  * Утилитарный класс для операций с сущностью экзоскелета.
  * Предоставляет методы для установки/снятия частей, ядер синтеза, входа/выхода из экзоскелета.
- * Вызывается из обработчиков событий и сетевых обработчиков сообщений.
  * Расширен методами для установки/снятия ядер синтеза на нагрудниках других игроков.
+ *
+ * В эту локальную копию добавлены ссылки на AFPConfig для конфигурируемых порогов дистанции,
+ * угла и максимальной разрядки, а также корректная проверка наличия энергии.
  */
 public class UtilEntityExoskeleton {
     /**
@@ -150,18 +154,26 @@ public class UtilEntityExoskeleton {
     public static void tryEnterExoskeleton(World world, EntityPlayer player, EntityExoskeleton.Exoskeleton entity) {
         if (player.isSneaking()) return;
         double distanceSquared = player.getDistanceSq(entity);
-        if (distanceSquared > 1.0D) return;
+        // Используем расстояние из конфигурации (квадрат расстояния)
+        if (distanceSquared > AFPConfig.exoskeletonEntryDistance) return;
         float yawDifference = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
-        if (yawDifference <= -55.0F || yawDifference >= 55.0F) return;
+        // Используем предельный угол из конфигурации
+        if (yawDifference <= -AFPConfig.exoskeletonEntryYaw || yawDifference >= AFPConfig.exoskeletonEntryYaw) return;
+        // игрок должен снять всю броню перед входом
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
             if (!player.getItemStackFromSlot(slot).isEmpty()) return;
         }
+        // переносим все предметы экзоскелета на игрока
         for (EntityEquipmentSlot slot : ARMOR_SLOTS) {
             player.setItemStackToSlot(slot, entity.getItemStackFromSlot(slot).copy());
         }
         ItemStack chestplateStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-        if (hasBooleanTag(player.getItemStackFromSlot(EntityEquipmentSlot.CHEST), "fusion_depletion") && chestplateStack.getTagCompound().getFloat("fusion_depletion") < 288000) {
-            world.playSound(null, entity.posX, entity.posY, entity.posZ, POWERON_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+        // если в нагруднике есть тег fusion_depletion и его значение меньше максимального порога, воспроизводим звук включения
+        if (!chestplateStack.isEmpty() && chestplateStack.hasTagCompound()) {
+            NBTTagCompound tag = chestplateStack.getTagCompound();
+            if (tag.hasKey("fusion_depletion") && tag.getFloat("fusion_depletion") < AFPConfig.maxDepletion) {
+                world.playSound(null, entity.posX, entity.posY, entity.posZ, POWERON_SOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+            }
         }
         player.rotationYaw = entity.rotationYaw;
         player.rotationPitch = entity.rotationPitch;

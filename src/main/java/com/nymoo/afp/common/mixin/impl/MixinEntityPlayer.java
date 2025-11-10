@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * Миксин для изменения поведения игрока при ношении силовой брони.
  * Корректирует скорость, взаимодействие с водой, воздух и габариты игрока.
+ * Добавлены ссылки на AFPConfig для возможности конфигурирования поведения.
  */
 @Mixin(EntityPlayer.class)
 public abstract class MixinEntityPlayer extends Entity {
@@ -28,11 +29,8 @@ public abstract class MixinEntityPlayer extends Entity {
 
     /**
      * Модифицирует возвращаемую AI-скорость игрока.
-     * Логика:
-     * - Если в слоте груди экипирована силовая броня, читается NBT-ключ "fusion_depletion".
-     * - Если NBT отсутствует или значение >= 288000 применяется сильно замедляющий коэффициент 0.1.
-     * - Иначе применяется коэффициент AFPConfig.powerArmorSpeedMultiplier.
-     * Результат: в cir возвращается изменённая скорость.
+     * Если ядро синтеза разряжено, применяется коэффициент powerArmorDepletedSpeedMultiplier,
+     * иначе применяется powerArmorSpeedMultiplier из конфигурации.
      *
      * @param cir Колбэк с исходным значением скорости и возможностью заменить его
      */
@@ -43,14 +41,14 @@ public abstract class MixinEntityPlayer extends Entity {
         // Применяем только когда в слоте груди силовая броня
         if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
             NBTTagCompound nbt = chestplateStack.getTagCompound();
-            // Если NBT отсутствует или броня "пустая" (fusion_depletion >= лимит) даём очень медленную скорость
-            if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= 288000) {
+            // Если NBT отсутствует или броня "пустая" (fusion_depletion >= лимит), замедляем до конфигурируемого множителя
+            if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= AFPConfig.maxDepletion) {
                 float originalSpeed = cir.getReturnValue();
-                float modifiedSpeed = originalSpeed * 0.1f;
+                float modifiedSpeed = originalSpeed * AFPConfig.powerArmorDepletedSpeedMultiplier;
                 cir.setReturnValue(modifiedSpeed);
                 return;
             }
-            // Иначе применяем конфигурационный множитель скорости
+            // Иначе применяем конфигурационный множитель скорости для заряжённой брони
             float originalSpeed = cir.getReturnValue();
             float modifiedSpeed = originalSpeed * AFPConfig.powerArmorSpeedMultiplier;
             cir.setReturnValue(modifiedSpeed);
@@ -75,11 +73,8 @@ public abstract class MixinEntityPlayer extends Entity {
 
     /**
      * Корректирует движение игрока в воде после выполнения travel.
-     * Логика:
-     * - Если надета силовая броня, читается NBT "fusion_depletion".
-     * - При отсутствии NBT или истощении энергии применяется коэффициент 0.1.
-     * - Иначе применяем AFPConfig.powerArmorSpeedMultiplier.
-     * - Находясь в воде умножаем motionX и motionZ на вычисленный множитель.
+     * Если ядро разряжено, применяется powerArmorDepletedSpeedMultiplier,
+     * иначе powerArmorSpeedMultiplier.
      *
      * @param strafe   Страиф-параметр движения (не используется напрямую)
      * @param vertical Вертикальная составляющая движения (не используется напрямую)
@@ -95,8 +90,8 @@ public abstract class MixinEntityPlayer extends Entity {
         NBTTagCompound nbt = chestplate.getTagCompound();
         float multiplier;
         // Выбор множителя в зависимости от состояния fusion core
-        if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= 288000) {
-            multiplier = 0.1f;
+        if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= AFPConfig.maxDepletion) {
+            multiplier = AFPConfig.powerArmorDepletedSpeedMultiplier;
         } else {
             multiplier = AFPConfig.powerArmorSpeedMultiplier;
         }
@@ -109,10 +104,7 @@ public abstract class MixinEntityPlayer extends Entity {
 
     /**
      * Отслеживает время нахождения под водой и даёт дыхание при наличии силовой брони.
-     * Логика:
-     * - При отсутствии NBT создаётся тег.
-     * - Если игрок не в воде, удаляем счётчик "afp_underwater_ticks".
-     * - В воде инкрементируем счётчик и восстанавливаем воздух до 300, пока счётчик < 24000.
+     * Использует конфигурационные параметры underwaterBreathTicks и underwaterBreathAir.
      *
      * @param ci Колбэк для внедрения в конец onUpdate
      */
@@ -141,19 +133,16 @@ public abstract class MixinEntityPlayer extends Entity {
         }
         int ticks = nbt.getInteger("afp_underwater_ticks");
         // Пока счётчик меньше лимита, даём воздух и инкрементируем
-        if (ticks < 24000) {
-            player.setAir(300);
+        if (ticks < AFPConfig.underwaterBreathTicks) {
+            // Восстанавливаем запас воздуха в соответствии с конфигурацией
+            player.setAir(AFPConfig.underwaterBreathAir);
             nbt.setInteger("afp_underwater_ticks", ticks + 1);
         }
     }
 
     /**
      * Обновляет размеры игрока в зависимости от состояния и ношения силовой брони.
-     * Логика:
-     * - Рассчитывает новые width/height для состояний: elytra, спать, приседание, обычное.
-     * - При ношении силовой брони используются увеличенные значения.
-     * - Проверяет коллизию новой bounding box с миром и применяет изменение через setSize.
-     * - Отменяет исходный метод (ci.cancel) чтобы заменить поведение.
+     * Значения ширины и высоты для силовой брони берутся из конфигурации.
      *
      * @param ci Колбэк, позволяющий отменить оригинальное выполнение
      */
@@ -167,22 +156,29 @@ public abstract class MixinEntityPlayer extends Entity {
         float f1;
         // Рассчитываем размеры по состоянию игрока с учётом брони
         if (player.isElytraFlying()) {
-            f = wearingPowerArmor ? 0.65F : 0.6F;
-            f1 = 0.6F;
+            // При полёте с элитрой используем специальные размеры из конфигурации
+            f = wearingPowerArmor ? AFPConfig.powerArmorWidth : 0.6F;
+            f1 = wearingPowerArmor ? AFPConfig.powerArmorHeightElytra : 0.6F;
         } else if (player.isPlayerSleeping()) {
+            // При сне размеры не зависят от брони
             f = 0.2F;
             f1 = 0.2F;
         } else if (player.isSneaking()) {
-            f = wearingPowerArmor ? 0.65F : 0.6F;
-            f1 = wearingPowerArmor ? 1.85F : 1.65F;
+            // При приседании используем sneaking-значения
+            f = wearingPowerArmor ? AFPConfig.powerArmorWidth : 0.6F;
+            f1 = wearingPowerArmor ? AFPConfig.powerArmorHeightSneaking : 1.65F;
         } else {
-            f = wearingPowerArmor ? 0.65F : 0.6F;
-            f1 = wearingPowerArmor ? 2.0F : 1.8F;
+            // В обычном состоянии используем стоячие размеры
+            f = wearingPowerArmor ? AFPConfig.powerArmorWidth : 0.6F;
+            f1 = wearingPowerArmor ? AFPConfig.powerArmorHeightStanding : 1.8F;
         }
         // Применяем новые размеры, если в мире нет коллизий для bounding box
         if (f != player.width || f1 != player.height) {
             AxisAlignedBB axisalignedbb = player.getEntityBoundingBox();
-            axisalignedbb = new AxisAlignedBB(axisalignedbb.minX, axisalignedbb.minY, axisalignedbb.minZ, axisalignedbb.minX + (double) f, axisalignedbb.minY + (double) f1, axisalignedbb.minZ + (double) f);
+            axisalignedbb = new AxisAlignedBB(axisalignedbb.minX, axisalignedbb.minY, axisalignedbb.minZ,
+                    axisalignedbb.minX + (double) f,
+                    axisalignedbb.minY + (double) f1,
+                    axisalignedbb.minZ + (double) f);
             if (!player.world.collidesWithAnyBlock(axisalignedbb)) {
                 this.setSize(f, f1);
             }

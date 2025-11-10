@@ -4,6 +4,7 @@ import com.nymoo.afp.AtomFusionProtocol;
 import com.nymoo.afp.ModDataSyncManager;
 import com.nymoo.afp.ModElementRegistry;
 import com.nymoo.afp.Tags;
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.entity.EntityExoskeleton;
 import com.nymoo.afp.common.item.IPowerArmor;
 import com.nymoo.afp.common.item.ItemFusionCore;
@@ -37,37 +38,11 @@ import static com.nymoo.afp.common.util.UtilEntityExoskeleton.hasBooleanTag;
 /**
  * Обработчик клиентских событий для взаимодействий с экзоскелетом и силовой бронёй.
  * Управляет процессами удержания клавиш, воспроизведением звуков и визуальными эффектами.
+ * В этой версии значения констант заменены на считываемые из конфигурации AFPConfig,
+ * что позволяет игрокам настраивать параметры без изменения кода.
  */
 @Mod.EventBusSubscriber
 public class HandlerClientTickEvent {
-    /**
-     * Время удержания для операций с ядром синтеза
-     */
-    public static final float FUSION_HOLD_TIME = 1.45F;
-    /**
-     * Время удержания для операций с бронёй
-     */
-    public static final float ARMOR_HOLD_TIME = 6.0F;
-    /**
-     * Задержка перед началом затемнения экрана
-     */
-    public static final float FADE_DELAY = -1.0F;
-    /**
-     * Длительность плавного затемнения экрана
-     */
-    public static final float FADE_DURATION_IN = 0.5F;
-    /**
-     * Длительность удержания чёрного экрана
-     */
-    public static final float FADE_HOLD = 0.5F;
-    /**
-     * Длительность плавного осветления экрана
-     */
-    public static final float FADE_DURATION_OUT = 0.5F;
-    /**
-     * Время перезарядки между операциями с ядром синтеза
-     */
-    public static final float FUSION_COOLDOWN = 1.0F;
 
     /**
      * Набор слотов экипировки для проверки брони
@@ -79,14 +54,6 @@ public class HandlerClientTickEvent {
             EntityEquipmentSlot.FEET
     );
 
-    /**
-     * Громкость звуков работы с ядром синтеза
-     */
-    public static float FUSION_VOLUME = 1.0F;
-    /**
-     * Громкость звуков работы с бронёй
-     */
-    public static float ARMOR_VOLUME = 1.0F;
     /**
      * Время начала текущего удержания
      */
@@ -174,6 +141,7 @@ public class HandlerClientTickEvent {
 
     /**
      * Замедляет движение игрока во время взаимодействия с бронёй.
+     * Использует коэффициент из конфигурации AFPConfig для плавного движения при удержании.
      *
      * @param event Событие обновления ввода
      */
@@ -181,8 +149,8 @@ public class HandlerClientTickEvent {
     @SideOnly(Side.CLIENT)
     public static void onInputUpdate(InputUpdateEvent event) {
         if (startHoldTime != 0L && (currentMode == 2 || currentMode == 3)) {
-            event.getMovementInput().moveForward *= 0.1F;
-            event.getMovementInput().moveStrafe *= 0.1F;
+            event.getMovementInput().moveForward *= AFPConfig.powerArmorInteractionSpeed;
+            event.getMovementInput().moveStrafe *= AFPConfig.powerArmorInteractionSpeed;
         }
     }
 
@@ -261,7 +229,8 @@ public class HandlerClientTickEvent {
             AtomFusionProtocol.PACKET_HANDLER.sendToServer(new KeybindingExitPowerArmor.KeyBindingPressedMessage());
         }
         if (currentMode == 2 || currentMode == 3) {
-            fadeStartTime = System.currentTimeMillis() + (long) (FADE_DELAY * 1000);
+            // Используем значение из конфигурации напрямую
+            fadeStartTime = System.currentTimeMillis() + (long) (AFPConfig.fadeDelay * 1000);
         }
         if (currentMode == 0 || currentMode == 1) {
             lastFusionActionTime = System.currentTimeMillis();
@@ -285,7 +254,8 @@ public class HandlerClientTickEvent {
                 && !player.isRiding()
                 && UtilEntityExoskeleton.isSpaceBehindPlayerClear(world, player, player.getHorizontalFacing())
                 && !minecraft.gameSettings.keyBindJump.isKeyDown()) {
-            startHold(3, ARMOR_HOLD_TIME, -1, null, player.posX, player.posY, player.posZ, minecraft);
+            // Для выхода из экзоскелета используем значение из конфигурации
+            startHold(3, AFPConfig.armorHoldTime, -1, null, player.posX, player.posY, player.posZ, minecraft);
             return;
         }
         if (!isHoldingRightClick) {
@@ -317,19 +287,19 @@ public class HandlerClientTickEvent {
                 NBTTagCompound tagCompound = chestStack.getTagCompound();
                 boolean hasEnergy = tagCompound != null && tagCompound.hasKey("fusion_depletion");
                 if (!heldItem.isEmpty() && heldItem.getItem() == ItemFusionCore.itemFusionCore && !hasEnergy) {
-                    if ((System.currentTimeMillis() - lastFusionActionTime) / 1000.0F < FUSION_COOLDOWN) {
+                    if ((System.currentTimeMillis() - lastFusionActionTime) / 1000.0F < AFPConfig.fusionCooldown) {
                         return;
                     }
-                    startHold(0, FUSION_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
+                    startHold(0, AFPConfig.fusionHoldTime, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
                 } else if (heldItem.isEmpty() && hasEnergy) {
-                    if ((System.currentTimeMillis() - lastFusionActionTime) / 1000.0F < FUSION_COOLDOWN) {
+                    if ((System.currentTimeMillis() - lastFusionActionTime) / 1000.0F < AFPConfig.fusionCooldown) {
                         return;
                     }
-                    startHold(1, FUSION_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
+                    startHold(1, AFPConfig.fusionHoldTime, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
                 }
             }
         } else if (isExoskeleton && heldItem.isEmpty() && (hasBooleanTag(chestStack, "soldered") || isAllExo((EntityExoskeleton.Exoskeleton) entity)) && isPlayerArmorEmpty(player)) {
-            startHold(2, ARMOR_HOLD_TIME, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
+            startHold(2, AFPConfig.armorHoldTime, entity.getEntityId(), clickedSlot, entity.posX, entity.posY, entity.posZ, minecraft);
         }
     }
 
@@ -356,7 +326,8 @@ public class HandlerClientTickEvent {
         soundZ = z;
         String soundName = (mode == 0 || mode == 1) ? "fusion_core_in_out" : "power_armor_in_out";
         SoundEvent soundEvent = ModElementRegistry.getSound(new ResourceLocation(Tags.MOD_ID, soundName));
-        float volume = (mode == 0 || mode == 1) ? FUSION_VOLUME : ARMOR_VOLUME;
+        // Выбираем громкость на основе конфигурации
+        float volume = (mode == 0 || mode == 1) ? AFPConfig.fusionVolume : AFPConfig.armorVolume;
         if (currentSound == null || !minecraft.getSoundHandler().isSoundPlaying(currentSound)) {
             currentSound = new LoadingSound(soundEvent, (float) x, (float) y, (float) z, volume);
             minecraft.getSoundHandler().playSound(currentSound);
@@ -475,11 +446,13 @@ public class HandlerClientTickEvent {
      */
     private static boolean validateTargetPositionAndYaw(EntityPlayer player, Entity entity) {
         double distanceSquared = player.getDistanceSq(entity);
-        if (distanceSquared > 1.0D) {
+        // Используем конфигурируемый порог для дистанции
+        if (distanceSquared > AFPConfig.exoskeletonEntryDistance) {
             return false;
         }
         float yawDifference = MathHelper.wrapDegrees(player.rotationYaw - entity.rotationYaw);
-        return yawDifference >= -55.0F && yawDifference <= 55.0F;
+        // Проверяем угол по конфигурационному значению
+        return yawDifference >= -AFPConfig.exoskeletonEntryYaw && yawDifference <= AFPConfig.exoskeletonEntryYaw;
     }
 
     /**

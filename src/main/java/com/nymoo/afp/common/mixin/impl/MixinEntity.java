@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.mixin.impl;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.handler.HandlerClientTickEvent;
 import com.nymoo.afp.common.item.IPowerArmor;
 import net.minecraft.entity.Entity;
@@ -16,13 +17,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Миксин для изменения поведения сущностей.
  * Модифицирует поворот игрока и предотвращает столкновения при ношении силовой брони.
+ * Значения замедления поворота берутся из конфигурации.
  */
 @Mixin(Entity.class)
 public abstract class MixinEntity {
 
     /**
      * Модифицирует скорость поворота по горизонтали.
-     * Замедляет поворот при взаимодействии с бронёй или разряженном ядре синтеза.
+     * Замедляет поворот при взаимодействии с бронёй (режимы 2 и 3) или при разряжённом ядре синтеза.
      *
      * @param yaw Исходная скорость поворота по горизонтали
      * @return Модифицированная скорость поворота по горизонтали
@@ -33,14 +35,16 @@ public abstract class MixinEntity {
             return yaw;
         }
         EntityPlayer player = (EntityPlayer) (Object) this;
+        // Клиентские режимы взаимодействия с бронёй (держим кнопку входа/выхода из экзоскелета)
         if (player.world.isRemote && (HandlerClientTickEvent.currentMode == 2 || HandlerClientTickEvent.currentMode == 3)) {
-            return yaw * 0.05f;
+            return yaw * AFPConfig.powerArmorRotationMultiplier;
         }
+        // Проверяем наличие силовой брони и её заряд
         ItemStack chestplateStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
         if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
             NBTTagCompound nbt = chestplateStack.getTagCompound();
-            if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= 288000) {
-                return yaw * 0.05f;
+            if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= AFPConfig.maxDepletion) {
+                return yaw * AFPConfig.powerArmorRotationMultiplier;
             }
         }
         return yaw;
@@ -48,7 +52,7 @@ public abstract class MixinEntity {
 
     /**
      * Модифицирует скорость поворота по вертикали.
-     * Замедляет поворот при взаимодействии с бронёй или разряженном ядре синтеза.
+     * Аналогично горизонтальному повороту использует множитель из конфигурации.
      *
      * @param pitch Исходная скорость поворота по вертикали
      * @return Модифицированная скорость поворота по вертикали
@@ -60,13 +64,13 @@ public abstract class MixinEntity {
         }
         EntityPlayer player = (EntityPlayer) (Object) this;
         if (player.world.isRemote && (HandlerClientTickEvent.currentMode == 2 || HandlerClientTickEvent.currentMode == 3)) {
-            return pitch * 0.05f;
+            return pitch * AFPConfig.powerArmorRotationMultiplier;
         }
         ItemStack chestplateStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
         if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
             NBTTagCompound nbt = chestplateStack.getTagCompound();
-            if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= 288000) {
-                return pitch * 0.05f;
+            if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= AFPConfig.maxDepletion) {
+                return pitch * AFPConfig.powerArmorRotationMultiplier;
             }
         }
         return pitch;

@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.mixin.impl;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import com.nymoo.afp.common.item.IPowerArmor;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -14,17 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Миксин для модификации поведения EntityLivingBase при использовании силовой брони.
- * Реализует плавный отскок от дна и ограничения прыжков при разряженном ядре синтеза.
+ * Реализует ограничения прыжков и плавный отскок от дна в зависимости от заряда ядра.
+ * Все жёстко прописанные значения заменены ссылками на AFPConfig.
  */
 @Mixin(EntityLivingBase.class)
 public abstract class MixinEntityLivingBase {
 
-    /**
-     * Целевая вертикальная скорость для плавного отскока.
-     * Определяет максимальную скорость подъема при отталкивании от дна.
-     */
-    @Unique
-    private static final double AFP_SMOOTH_BOUNCE_TARGET = 0.45D;
     /**
      * Таймер для управления плавным отскоком от дна.
      * Уменьшается каждый тик и определяет продолжительность эффекта.
@@ -34,7 +30,7 @@ public abstract class MixinEntityLivingBase {
 
     /**
      * Обрабатывает прыжок игрока в силовой броне.
-     * Отменяет прыжок если ядро синтеза разряжено.
+     * Если ядро синтеза разряжено (fusion_depletion >= maxDepletion), прыжок отменяется.
      *
      * @param ci Колбэк для отмены стандартного поведения
      */
@@ -46,7 +42,8 @@ public abstract class MixinEntityLivingBase {
 
             if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
                 NBTTagCompound nbt = chestplateStack.getTagCompound();
-                if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= 288000) {
+                // Отменяем прыжок, если ядро разряжено или отсутствует
+                if (nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= AFPConfig.maxDepletion) {
                     ci.cancel();
                 }
             }
@@ -55,7 +52,8 @@ public abstract class MixinEntityLivingBase {
 
     /**
      * Обрабатывает подъем со дна в воде/лаве для игрока в силовой броне.
-     * Реализует плавный отскок при заряженном ядре и блокирует подъем при разряженном.
+     * Если ядро разряжено, отменяет подъем. Иначе инициирует плавный отскок
+     * с параметрами из конфигурации.
      *
      * @param ci Колбэк для отмены стандартного поведения
      */
@@ -69,19 +67,23 @@ public abstract class MixinEntityLivingBase {
 
             if (!chestplateStack.isEmpty() && chestplateStack.getItem() instanceof IPowerArmor) {
                 NBTTagCompound nbt = chestplateStack.getTagCompound();
-                boolean discharged = nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= 288000;
+                boolean discharged = nbt == null || !nbt.hasKey("fusion_depletion") || nbt.getFloat("fusion_depletion") >= AFPConfig.maxDepletion;
 
                 if (discharged) {
+                    // Если разряжено, отменяем прыжок в воде
                     ci.cancel();
                     return;
                 }
 
+                // Запускаем плавный отскок: минимальная вертикальная скорость и таймер
                 if (self.onGround) {
-                    self.motionY = Math.max(self.motionY, 0.12D);
+                    // устанавливаем вертикальную скорость не менее заданной конфигурацией
+                    self.motionY = Math.max(self.motionY, AFPConfig.powerArmorWaterJumpMotion);
                     self.isAirBorne = true;
-                    this.afpSmoothBounceTimer = 6;
+                    this.afpSmoothBounceTimer = AFPConfig.powerArmorBounceTimer;
                 }
 
+                // Отменяем дальнейшую обработку, чтобы наша логика применилась
                 ci.cancel();
             }
         }
@@ -89,7 +91,7 @@ public abstract class MixinEntityLivingBase {
 
     /**
      * Обрабатывает движение сущности и применяет плавный отскок при активном таймере.
-     * Добавляет вертикальную скорость и сглаживает горизонтальное движение.
+     * Добавляет вертикальную скорость и сглаживает горизонтальное движение в соответствии с конфигом.
      *
      * @param strafe   Боковое движение
      * @param vertical Вертикальное движение
@@ -101,16 +103,16 @@ public abstract class MixinEntityLivingBase {
         EntityLivingBase self = (EntityLivingBase) (Object) this;
 
         if (this.afpSmoothBounceTimer > 0) {
-            double add = 0.055D;
-            double desired = Math.min(AFP_SMOOTH_BOUNCE_TARGET, self.motionY + add);
-
+            // Ускоряемся к целевой скорости
+            double add = AFPConfig.powerArmorBounceAcceleration;
+            double desired = Math.min(AFPConfig.powerArmorBounceTarget, self.motionY + add);
             if (desired > self.motionY) {
                 self.motionY = desired;
                 self.isAirBorne = true;
             }
-
-            self.motionX *= 0.98;
-            self.motionZ *= 0.98;
+            // Применяем горизонтальное трение
+            self.motionX *= AFPConfig.powerArmorBounceFriction;
+            self.motionZ *= AFPConfig.powerArmorBounceFriction;
             this.afpSmoothBounceTimer--;
         }
     }
