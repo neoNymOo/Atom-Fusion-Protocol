@@ -1,5 +1,6 @@
 package com.nymoo.afp.common.handler;
 
+import com.nymoo.afp.common.config.AFPConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -46,17 +47,17 @@ public class HandlerRenderGameOverlayEvent {
             if (currentTime < HandlerClientTickEvent.fadeStartTime) return;
 
             float elapsedTime = (currentTime - HandlerClientTickEvent.fadeStartTime) / 1000.0F;
-            float totalInHold = HandlerClientTickEvent.FADE_DURATION_IN + HandlerClientTickEvent.FADE_HOLD;
-            float totalDuration = totalInHold + HandlerClientTickEvent.FADE_DURATION_OUT;
+            float totalInHold = AFPConfig.fadeDurationIn + AFPConfig.fadeHold;
+            float totalDuration = totalInHold + AFPConfig.fadeDurationOut;
 
             if (elapsedTime >= totalDuration) {
                 HandlerClientTickEvent.fadeStartTime = 0L;
                 return;
             }
 
-            float alpha = (elapsedTime < HandlerClientTickEvent.FADE_DURATION_IN) ? elapsedTime / HandlerClientTickEvent.FADE_DURATION_IN :
+            float alpha = (elapsedTime < AFPConfig.fadeDurationIn) ? elapsedTime / AFPConfig.fadeDurationIn :
                     (elapsedTime < totalInHold) ? 1.0F :
-                            1.0F - (elapsedTime - totalInHold) / HandlerClientTickEvent.FADE_DURATION_OUT;
+                            1.0F - (elapsedTime - totalInHold) / AFPConfig.fadeDurationOut;
             drawFade(alpha, resolution);
         }
     }
