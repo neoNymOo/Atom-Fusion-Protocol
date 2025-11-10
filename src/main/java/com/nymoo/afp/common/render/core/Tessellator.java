@@ -9,8 +9,19 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 
 import java.nio.*;
+import java.util.Arrays;
 import java.util.PriorityQueue;
 
+/**
+ * A lightweight wrapper around the Minecraft tessellator used by this mod.
+ *
+ * <p>In vanilla AFP the {@code getVertexState} method repeatedly allocates
+ * temporary arrays and a priority queue on every invocation. For rendering
+ * performance this implementation reuses buffers and sorts segment indices
+ * with {@link Arrays#sort(Object[], int, int, java.util.Comparator)} instead of
+ * {@link PriorityQueue}. This greatly reduces per-frame garbage and overhead
+ * when converting quads to triangles.</p>
+ */
 @SideOnly(Side.CLIENT)
 public class Tessellator {
     /**
@@ -122,6 +133,10 @@ public class Tessellator {
     private int r, g, b, a;
     private float normalTestX, normalTestY, normalTestZ;
 
+    // Reusable buffers to avoid allocations in getVertexState
+    private int[] vertexStateBuffer = null;
+    private Integer[] sortIndices = null;
+
     private Tessellator(int p_i1250_1_) {
     }
 
@@ -141,32 +156,57 @@ public class Tessellator {
         return 1;
     }
 
-    public TessellatorVertexState getVertexState(float p_147564_1_, float p_147564_2_, float p_147564_3_) {
-        int[] aint = new int[this.rawBufferIndex];
-        PriorityQueue<Integer> priorityqueue = new PriorityQueue<>(
-                this.rawBufferIndex,
-                new QuadComparator(
-                        this.rawBuffer,
-                        p_147564_1_ + (float) this.xOffset,
-                        p_147564_2_ + (float) this.yOffset,
-                        p_147564_3_ + (float) this.zOffset
-                )
-        );
-        byte b0 = 32;
-        int i;
-
-        for (i = 0; i < this.rawBufferIndex; i += b0) {
-            priorityqueue.add(Integer.valueOf(i));
+    /**
+     * Sorts the current raw buffer by distance from the provided position and returns a vertex state.
+     *
+     * <p>This implementation reuses internal buffers and uses {@link Arrays#sort(Object[], int, int, java.util.Comparator)}
+     * to order starting indices rather than a {@link PriorityQueue}. This avoids allocating a priority queue and
+     * reduces per-call garbage generation.</p>
+     *
+     * @param x viewpoint x coordinate
+     * @param y viewpoint y coordinate
+     * @param z viewpoint z coordinate
+     * @return the sorted {@link TessellatorVertexState}
+     */
+    public TessellatorVertexState getVertexState(float x, float y, float z) {
+        // Number of integers currently used in the raw buffer
+        int total = this.rawBufferIndex;
+        // Each vertex comprises 8 ints (32 bytes) in the old implementation
+        int segSize = 32;
+        int segCount = total / segSize;
+        // Ensure buffers are large enough
+        if (vertexStateBuffer == null || vertexStateBuffer.length < total) {
+            vertexStateBuffer = new int[total];
         }
-
-        for (i = 0; !priorityqueue.isEmpty(); i += b0) {
-            int j = priorityqueue.remove().intValue();
-
-            System.arraycopy(this.rawBuffer, j, aint, i, b0);
+        if (sortIndices == null || sortIndices.length < segCount) {
+            sortIndices = new Integer[segCount];
         }
-
-        System.arraycopy(aint, 0, this.rawBuffer, 0, aint.length);
-        return new TessellatorVertexState(aint, this.rawBufferIndex, this.vertexCount, this.hasTexture, this.hasBrightness, this.hasNormals, this.hasColor);
+        // Populate sortIndices with starting offsets
+        for (int i = 0; i < segCount; i++) {
+            sortIndices[i] = i * segSize;
+        }
+        // Precompute offset position for comparator
+        float ox = x + (float) this.xOffset;
+        float oy = y + (float) this.yOffset;
+        float oz = z + (float) this.zOffset;
+        // Sort indices using comparator instead of PriorityQueue
+        Arrays.sort(sortIndices, 0, segCount, new QuadComparator(this.rawBuffer, ox, oy, oz));
+        // Copy segments into vertexStateBuffer in sorted order
+        for (int i = 0; i < segCount; i++) {
+            int src = sortIndices[i];
+            System.arraycopy(this.rawBuffer, src, vertexStateBuffer, i * segSize, segSize);
+        }
+        // Copy any remaining data (if rawBufferIndex is not a multiple of segSize)
+        int remainingStart = segCount * segSize;
+        if (remainingStart < total) {
+            int remainingLength = total - remainingStart;
+            System.arraycopy(this.rawBuffer, remainingStart, vertexStateBuffer, remainingStart, remainingLength);
+        }
+        // Update rawBuffer in place
+        System.arraycopy(vertexStateBuffer, 0, this.rawBuffer, 0, total);
+        // Create a copy for the returned state to avoid exposing internal buffer
+        int[] resultCopy = Arrays.copyOf(vertexStateBuffer, total);
+        return new TessellatorVertexState(resultCopy, this.rawBufferIndex, this.vertexCount, this.hasTexture, this.hasBrightness, this.hasNormals, this.hasColor);
     }
 
     public void setVertexState(TessellatorVertexState p_147565_1_) {
@@ -214,20 +254,6 @@ public class Tessellator {
      * Resets tessellator state and prepares for drawing (with the specified draw mode).
      */
     public void startDrawing(int glMode, VertexFormat format) {
-       /* if (this.isDrawing)
-        {
-            throw new IllegalStateException("Already tesselating!");
-        }
-        else
-        {
-            this.isDrawing = true;
-            this.reset();
-            this.drawMode = p_78371_1_;
-            this.hasNormals = false;
-            this.hasColor = false;
-            this.hasTexture = false;
-            this.hasBrightness = false;
-        }*/
         this.isColorDisabled = false;
         net.minecraft.client.renderer.Tessellator.getInstance().getBuffer().begin(glMode, format);
     }
@@ -334,8 +360,6 @@ public class Tessellator {
         if (hasNormals)
             buf.normal(normalTestX, normalTestY, normalTestZ);
         buf.endVertex();
-        /*this.setTextureUV(p_78374_7_, p_78374_9_);
-        this.addVertex(p_78374_1_, p_78374_3_, p_78374_5_);*/
     }
 
     /**
@@ -347,48 +371,9 @@ public class Tessellator {
         buf.pos(x + xOffset, y + yOffset, z + zOffset);
         if (hasColor)
             buf.color(r, g, b, a);
-
         if (hasNormals)
             buf.normal(normalTestX, normalTestY, normalTestZ);
-
         buf.endVertex();
-
-       /* if (rawBufferIndex >= rawBufferSize - 32)
-        {
-            if (rawBufferSize == 0)
-            {
-                rawBufferSize = 0x10000;
-                rawBuffer = new int[rawBufferSize];
-            }
-            else
-            {
-                rawBufferSize *= 2;
-                rawBuffer = Arrays.copyOf(rawBuffer, rawBufferSize);
-            }
-        }
-        ++this.addedVertices;
-        if (this.hasTexture)
-        {
-            this.rawBuffer[this.rawBufferIndex + 3] = Float.floatToRawIntBits((float)this.textureU);
-            this.rawBuffer[this.rawBufferIndex + 4] = Float.floatToRawIntBits((float)this.textureV);
-        }
-        if (this.hasBrightness)
-        {
-            this.rawBuffer[this.rawBufferIndex + 7] = this.brightness;
-        }
-        if (this.hasColor)
-        {
-            this.rawBuffer[this.rawBufferIndex + 5] = this.color;
-        }
-        if (this.hasNormals)
-        {
-            this.rawBuffer[this.rawBufferIndex + 6] = this.normal;
-        }
-        this.rawBuffer[this.rawBufferIndex + 0] = Float.floatToRawIntBits((float)(p_78377_1_ + this.xOffset));
-        this.rawBuffer[this.rawBufferIndex + 1] = Float.floatToRawIntBits((float)(p_78377_3_ + this.yOffset));
-        this.rawBuffer[this.rawBufferIndex + 2] = Float.floatToRawIntBits((float)(p_78377_5_ + this.zOffset));
-        this.rawBufferIndex += 8;
-        ++this.vertexCount;*/
     }
 
     /**
@@ -423,10 +408,6 @@ public class Tessellator {
      */
     public void setNormal(float x, float y, float z) {
         this.hasNormals = true;
-        //  byte b0 = (byte)((int)(p_78375_1_ * 127.0F));
-        // byte b1 = (byte)((int)(p_78375_2_ * 127.0F));
-        // byte b2 = (byte)((int)(p_78375_3_ * 127.0F));
-        // this.normal = b0 & 255 | (b1 & 255) << 8 | (b2 & 255) << 16;
         normalTestX = x;
         normalTestY = y;
         normalTestZ = z;

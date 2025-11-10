@@ -18,7 +18,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -53,12 +53,14 @@ public class CommandSolderArmor extends ModElementRegistry.ModElement {
 
         @Override
         public List<String> getAliases() {
-            return new ArrayList<>();
+            // Return an immutable empty list to avoid allocations on each call
+            return Collections.emptyList();
         }
 
         @Override
         public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos position) {
-            return new ArrayList<>();
+            // Return an immutable empty list to avoid allocations on each call
+            return Collections.emptyList();
         }
 
         @Override

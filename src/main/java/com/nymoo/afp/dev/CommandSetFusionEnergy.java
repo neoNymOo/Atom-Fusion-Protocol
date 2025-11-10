@@ -13,7 +13,7 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,12 +48,14 @@ public class CommandSetFusionEnergy extends ModElementRegistry.ModElement {
 
         @Override
         public List<String> getAliases() {
-            return new ArrayList<>();
+            // Use immutable empty list to avoid repeated allocation
+            return Collections.emptyList();
         }
 
         @Override
         public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos targetPos) {
-            return new ArrayList<>();
+            // Use immutable empty list to avoid repeated allocation
+            return Collections.emptyList();
         }
 
         @Override
