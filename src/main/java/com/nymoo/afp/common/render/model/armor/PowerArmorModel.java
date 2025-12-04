@@ -47,14 +47,14 @@ public class PowerArmorModel extends AbstractArmorModel {
      */
     private void loadModels() {
         // Ключ для кэша зависит от типа брони, слота и наличия jetpack
-        String key = armorType + "_" + type + (hasJetpackVariant ? "_jet" : "");
+        String key = armorType + "_" + type + (hasJetpackVariant ? "_jetpack" : "");
 
         // Загружаем в соответствующий кэш при отсутствии записи
         if (hasJetpackVariant && !JET_MODEL_CACHE.containsKey(key)) {
-            String modelPath = "models/armor/" + armorType + "/" + armorType + "_j_armor.obj";
+            String modelPath = "models/armor/" + armorType + "/" + armorType + "_full_jetpack.obj";
             JET_MODEL_CACHE.put(key, AdvancedModelLoader.loadModel(new ResourceLocation("afp", modelPath)));
         } else if (!MODEL_CACHE.containsKey(key)) {
-            String modelPath = "models/armor/" + armorType + "/" + armorType + "_armor.obj";
+            String modelPath = "models/armor/" + armorType + "/" + armorType + "_full.obj";
             MODEL_CACHE.put(key, AdvancedModelLoader.loadModel(new ResourceLocation("afp", modelPath)));
         }
 
@@ -106,7 +106,7 @@ public class PowerArmorModel extends AbstractArmorModel {
         }
 
         // Привязка текстуры брони по типу
-        ResourceLocation texture = new ResourceLocation("afp", "textures/armor/" + armorType + "/" + armorType + ".png");
+        ResourceLocation texture = new ResourceLocation("afp", "textures/armor/" + armorType + "/" + armorType + "_full.png");
         Minecraft.getMinecraft().renderEngine.bindTexture(texture);
 
         // Рендеринг частей в зависимости от слота брони

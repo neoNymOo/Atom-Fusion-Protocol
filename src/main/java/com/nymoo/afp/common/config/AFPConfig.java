@@ -32,6 +32,8 @@ public class AFPConfig {
     // Настройки физики и хитбоксов
     public static float exoskeletonHitboxWidth = 0.65F;
     public static float exoskeletonHitboxHeight = 2.0F;
+    public static float brokenArmorPieceHitboxWidth = 0.5F;
+    public static float brokenArmorPieceHitboxHeight = 0.5F;
     public static float powerArmorSpeedMultiplier = 0.85F;
     public static float servoVolume = 0.55F;
     public static float powerArmorFallDamageMultiplier = 0.2F;
@@ -135,6 +137,8 @@ public class AFPConfig {
                 "can_exoskeleton_swing_arms",
                 "exoskeleton_hitbox_width",
                 "exoskeleton_hitbox_height",
+                "broken_armor_piece_hitbox_width",
+                "broken_armor_piece_hitbox_height",
                 "power_armor_speed_multiplier",
                 "power_armor_fall_damage_multiplier",
                 "power_armor_fall_threshold",
@@ -207,6 +211,8 @@ public class AFPConfig {
         canExoskeletonSwingArms = config.getBoolean("can_exoskeleton_swing_arms", CATEGORY_GENERAL, false, "Should the exoskeleton swing its arms?");
         exoskeletonHitboxWidth = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_width", 0.65, "Exoskeleton hitbox width. [default: 0.65]").getDouble();
         exoskeletonHitboxHeight = (float) config.get(CATEGORY_GENERAL, "exoskeleton_hitbox_height", 2.0, "Exoskeleton hitbox height. [default: 2.0]").getDouble();
+        brokenArmorPieceHitboxWidth = (float) config.get(CATEGORY_GENERAL, "broken_armor_piece_hitbox_width", 0.5, "Broken armor piece hitbox width. [default: 0.5]").getDouble();
+        brokenArmorPieceHitboxHeight = (float) config.get(CATEGORY_GENERAL, "broken_armor_piece_hitbox_height", 0.5, "Broken armor piece hitbox height. [default: 0.5]").getDouble();
         powerArmorSpeedMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_speed_multiplier", 0.85, "The player's speed multiplier when wearing power armor is multiplied by the player's current speed. [default: 0.85]").getDouble();
         powerArmorFallDamageMultiplier = (float) config.get(CATEGORY_GENERAL, "power_armor_fall_damage_multiplier", 0.2, "Multiplier for fall damage when wearing power armor. [default: 0.2]").getDouble();
         powerArmorFallThreshold = (float) config.get(CATEGORY_GENERAL, "power_armor_fall_threshold", 14.0, "The fall height threshold before the player starts taking fall damage. [default: 14.0]").getDouble();

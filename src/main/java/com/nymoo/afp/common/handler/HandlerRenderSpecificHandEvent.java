@@ -120,7 +120,7 @@ public class HandlerRenderSpecificHandEvent {
         ResourceLocation texture = textureCache.computeIfAbsent(armorItem, item -> {
             String registryPath = item.getRegistryName().getPath();
             String armorType = registryPath.substring(0, registryPath.length() - "_chestplate".length());
-            return new ResourceLocation("afp", "textures/armor/" + armorType + "/" + armorType + ".png");
+            return new ResourceLocation("afp", "textures/armor/" + armorType + "/" + armorType + "_full.png");
         });
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
 

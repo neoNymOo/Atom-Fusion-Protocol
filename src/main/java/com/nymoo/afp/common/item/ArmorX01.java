@@ -99,14 +99,14 @@ public class ArmorX01 extends ModElementRegistry.ModElement {
 
         ModelLoader.setCustomMeshDefinition(chestplate, stack -> {
             boolean jetpack = stack.getTagCompound() != null && stack.getTagCompound().getBoolean("jetpack");
-            String modelPath = jetpack ? "afp:x01/x01_j_chestplate" : "afp:x01/x01_chestplate";
+            String modelPath = jetpack ? "afp:x01/x01_chestplate_jetpack" : "afp:x01/x01_chestplate";
             return new ModelResourceLocation(modelPath, "inventory");
         });
 
         ModelLoader.registerItemVariants(
                 chestplate,
                 new ModelResourceLocation("afp:x01/x01_chestplate", "inventory"),
-                new ModelResourceLocation("afp:x01/x01_j_chestplate", "inventory")
+                new ModelResourceLocation("afp:x01/x01_chestplate_jetpack", "inventory")
         );
     }
 
