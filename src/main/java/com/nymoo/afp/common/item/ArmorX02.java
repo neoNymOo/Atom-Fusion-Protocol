@@ -99,14 +99,14 @@ public class ArmorX02 extends ModElementRegistry.ModElement {
 
         ModelLoader.setCustomMeshDefinition(chestplate, stack -> {
             boolean jetpack = stack.getTagCompound() != null && stack.getTagCompound().getBoolean("jetpack");
-            String modelPath = jetpack ? "afp:x02/x02_j_chestplate" : "afp:x02/x02_chestplate";
+            String modelPath = jetpack ? "afp:x02/x02_chestplate_jetpack" : "afp:x02/x02_chestplate";
             return new ModelResourceLocation(modelPath, "inventory");
         });
 
         ModelLoader.registerItemVariants(
                 chestplate,
                 new ModelResourceLocation("afp:x02/x02_chestplate", "inventory"),
-                new ModelResourceLocation("afp:x02/x02_j_chestplate", "inventory")
+                new ModelResourceLocation("afp:x02/x02_chestplate_jetpack", "inventory")
         );
     }
 
@@ -124,7 +124,7 @@ public class ArmorX02 extends ModElementRegistry.ModElement {
         @SideOnly(Side.CLIENT)
         public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
             if (helmetModel == null) {
-                helmetModel = new PowerArmorModel(0, "x02", false);
+                helmetModel = new PowerArmorModel(0, "x02", false, false);
             }
             return helmetModel;
         }
@@ -157,12 +157,12 @@ public class ArmorX02 extends ModElementRegistry.ModElement {
 
             if (jetpack) {
                 if (chestplateModelJet == null) {
-                    chestplateModelJet = new PowerArmorModel(1, "x02", true);
+                    chestplateModelJet = new PowerArmorModel(1, "x02", true, false);
                 }
                 return chestplateModelJet;
             } else {
                 if (chestplateModel == null) {
-                    chestplateModel = new PowerArmorModel(1, "x02", false);
+                    chestplateModel = new PowerArmorModel(1, "x02", false, false);
                 }
                 return chestplateModel;
             }
@@ -202,7 +202,7 @@ public class ArmorX02 extends ModElementRegistry.ModElement {
         @SideOnly(Side.CLIENT)
         public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
             if (leggingsModel == null) {
-                leggingsModel = new PowerArmorModel(2, "x02", false);
+                leggingsModel = new PowerArmorModel(2, "x02", false, false);
             }
             return leggingsModel;
         }
@@ -232,7 +232,7 @@ public class ArmorX02 extends ModElementRegistry.ModElement {
         @SideOnly(Side.CLIENT)
         public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
             if (bootsModel == null) {
-                bootsModel = new PowerArmorModel(3, "x02", false);
+                bootsModel = new PowerArmorModel(3, "x02", false, false);
             }
             return bootsModel;
         }

@@ -12,7 +12,8 @@
     "MixinEntity",
     "MixinEntityLivingBase",
     "EntityAccessor",
-    "MixinRenderLivingBase"
+    "MixinRenderLivingBase",
+    "MixinItemStack"
   ],
   "client": [
     "MixinModelBiped"

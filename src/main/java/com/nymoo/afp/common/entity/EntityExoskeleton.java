@@ -29,48 +29,50 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
- * Элемент мода для регистрации сущности экзоскелета.
- * Управляет созданием и рендерингом экзоскелета как неигровой сущности.
+ * Элемент мода: регистрация и клиентский рендер сущности экзоскелета.
+ * Сущность хранит полный комплект силовой брони и служит интерактивным контейнером.
  */
 @ModElementRegistry.ModElement.Tag
 public class EntityExoskeleton extends ModElementRegistry.ModElement {
-    /**
-     * ID сущности для регистрации в реестре
-     */
-    public static final int ENTITYID = 1;
+
+    // Идентификатор сущности в реестре
+    public static final int ENTITY_ID = 1;
 
     public EntityExoskeleton(ModElementRegistry instance) {
         super(instance, 1);
     }
 
+    /**
+     * Регистрирует сущность в наборе элементов мода.
+     */
     @Override
     public void initElements() {
         elements.entities.add(() -> EntityEntryBuilder.create()
                 .entity(Exoskeleton.class)
-                .id(new ResourceLocation("afp", "entity_exoskeleton"), ENTITYID)
+                .id(new ResourceLocation("afp", "entity_exoskeleton"), ENTITY_ID)
                 .name("entity_exoskeleton")
                 .tracker(64, 3, true)
                 .build());
     }
 
     /**
-     * Регистрирует рендерер для сущности экзоскелета на клиенте.
-     * Использует стандартную модель бипеда с пустой текстурой и слоем брони.
+     * Регистрирует рендер на клиенте: базовая модель + слой брони.
      *
-     * @param event Событие предварительной инициализации
+     * @param event событие препинициализации клиента
      */
     @SideOnly(Side.CLIENT)
     @Override
     public void preInit(FMLPreInitializationEvent event) {
         RenderingRegistry.registerEntityRenderingHandler(Exoskeleton.class, renderManager -> {
             RenderBiped<Exoskeleton> renderer = new RenderBiped<Exoskeleton>(renderManager, new ModelBiped(), 0.5f) {
-                private final ResourceLocation TEXTURE = new ResourceLocation("afp:textures/misc/blank.png");
+                private final ResourceLocation TEXTURE = new ResourceLocation("afp:textures/models/armor/exo/exo_full.png");
 
                 @Override
                 protected ResourceLocation getEntityTexture(Exoskeleton entity) {
                     return TEXTURE;
                 }
             };
+
             renderer.addLayer(new LayerBipedArmor(renderer) {
                 @Override
                 protected void initArmor() {
@@ -78,38 +80,43 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
                     modelArmor = new ModelBiped(1.0F);
                 }
             });
+
             return renderer;
         });
     }
 
     /**
-     * Сущность экзоскелета - неигровая сущность для хранения и отображения силовой брони.
-     * Используется как контейнер для брони при выходе игрока из экзоскелета.
+     * Сущность экзоскелета: статичный контейнер для полного набора брони.
      */
     public static class Exoskeleton extends EntityCreature {
-        /**
-         * Пороги высоты для определения кликнутого слота экипировки
-         */
+
+        // Пороговые высоты для определения, какой слот кликнули (голова/грудь/ноги/ботинки).
         public static final float[] SLOT_HEIGHT_THRESHOLDS = {1.5F, 0.7F, 0.35F};
-        /**
-         * Порядок слотов экипировки для обработки взаимодействий
-         */
+
+        // Порядок слотов по вертикали: голова, грудь, поножи, ботинки.
         public static final EntityEquipmentSlot[] SLOT_ORDER = {
                 EntityEquipmentSlot.HEAD,
                 EntityEquipmentSlot.CHEST,
                 EntityEquipmentSlot.LEGS,
                 EntityEquipmentSlot.FEET
         };
-        /**
-         * Изменяемая позиция блока для проверки столкновений
-         */
-        private final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 
+        // Вспомогательная позиция для проверки блока под сущностью.
+        private final BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
+
+        /**
+         * Конструктор: настраивает хитбокс, устойчивость к огню и начальные предметы в слотах.
+         *
+         * @param world мир
+         */
         public Exoskeleton(World world) {
             super(world);
             setSize(AFPConfig.exoskeletonHitboxWidth, AFPConfig.exoskeletonHitboxHeight);
             setNoAI(true);
             enablePersistence();
+            this.isImmuneToFire = true;
+
+            // Устанавливаем отображаемый комплект exo в слоты
             setItemStackToSlot(EntityEquipmentSlot.HEAD, new ItemStack(ArmorExo.helmet));
             setItemStackToSlot(EntityEquipmentSlot.CHEST, new ItemStack(ArmorExo.chestplate));
             setItemStackToSlot(EntityEquipmentSlot.LEGS, new ItemStack(ArmorExo.leggings));
@@ -117,11 +124,10 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Проверяет неуязвимость сущности к различным типам урона.
-         * Экзоскелет неуязвим ко всем типам урона по умолчанию.
+         * Делает сущность неуязвимой ко всем источникам урона.
          *
-         * @param source Источник урона
-         * @return Всегда true - экзоскелет неуязвим
+         * @param source источник урона
+         * @return всегда true (урон игнорируется)
          */
         @Override
         public boolean isEntityInvulnerable(DamageSource source) {
@@ -129,12 +135,12 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Обрабатывает атаку по экзоскелету.
-         * Позволяет игроку в режиме приседания собрать экзоскелет в предмет, если весь комплект типа 'exo'.
+         * Обработка "атаки" игроком: если игрок присел и внутри слотов полный комплект exo,
+         * то создаётся предмет exo_full и сущность удаляется.
          *
-         * @param source Источник урона
-         * @param amount Количество урона
-         * @return true если атака обработана, false в противном случае
+         * @param source источник урона
+         * @param amount количество урона (игнорируется)
+         * @return true если действие обработано и сущность удалена
          */
         @Override
         public boolean attackEntityFrom(DamageSource source, float amount) {
@@ -145,16 +151,17 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
                     for (EntityEquipmentSlot slot : EntityEquipmentSlot.values()) {
                         if (slot.getSlotType() == EntityEquipmentSlot.Type.ARMOR) {
                             ItemStack stack = getItemStackFromSlot(slot);
-                            if (stack.isEmpty() || !(stack.getItem() instanceof IPowerArmor) || !((IPowerArmor) stack.getItem()).getPowerArmorType().equals("exo")) {
+                            if (stack.isEmpty() || !(stack.getItem() instanceof IPowerArmor)
+                                    || !((IPowerArmor) stack.getItem()).getPowerArmorType().equals("exo")) {
                                 allExo = false;
                                 break;
                             }
                         }
                     }
                     if (allExo) {
-                        Item exoskeletonItem = Item.getByNameOrId("afp:exoskeleton");
-                        if (exoskeletonItem != null) {
-                            ItemStack drop = new ItemStack(exoskeletonItem);
+                        Item exoItem = Item.getByNameOrId("afp:exo_full");
+                        if (exoItem != null) {
+                            ItemStack drop = new ItemStack(exoItem);
                             entityDropItem(drop, 0.0F);
                             setDead();
                             return true;
@@ -166,10 +173,9 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Проверяет возможность толкания сущности.
-         * Экзоскелет нельзя толкать.
+         * Запрещает физическое толкание сущности.
          *
-         * @return Всегда false - экзоскелет нельзя толкать
+         * @return false
          */
         @Override
         public boolean canBePushed() {
@@ -177,10 +183,9 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Проверяет возможность столкновения с сущностью.
-         * С экзоскелетом можно сталкиваться.
+         * Разрешает коллизии с сущностью (чтобы можно было её кликать/подбирать).
          *
-         * @return Всегда true - с экзоскелетом можно сталкиваться
+         * @return true
          */
         @Override
         public boolean canBeCollidedWith() {
@@ -188,10 +193,9 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Проверяет возможность деспауна сущности.
-         * Экзоскелет никогда не деспаунится.
+         * Отключает автоматический деспаун.
          *
-         * @return Всегда false - экзоскелет не деспаунится
+         * @return false
          */
         @Override
         protected boolean canDespawn() {
@@ -199,10 +203,9 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Определяет способность сущности дышать под водой. Требуется для отключения пузырьков вокруг сущности под водой.
-         * Возврат true отключает механику утопления и появление пузырьков.
+         * Позволяет "дышать" под водой (нет утопления).
          *
-         * @return true - сущность дышит под водой, false - подчиняется стандартной механике
+         * @return true
          */
         @Override
         public boolean canBreatheUnderwater() {
@@ -210,15 +213,14 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Обновляет состояние экзоскелета каждый тик.
-         * Обрабатывает гравитацию и проверяет столкновение с землей.
+         * Обновление каждый тик: проверяет блок под сущностью и имитирует падение.
          */
         @Override
         public void onUpdate() {
             super.onUpdate();
             if (!world.isRemote) {
-                mutablePos.setPos(posX, posY - 0.1, posZ);
-                IBlockState state = world.getBlockState(mutablePos);
+                mutableBlockPos.setPos(posX, posY - 0.1, posZ);
+                IBlockState state = world.getBlockState(mutableBlockPos);
                 if (state.isFullBlock()) {
                     motionY = 0;
                     onGround = true;
@@ -230,14 +232,13 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Устанавливает позицию и углы поворота экзоскелета.
-         * Синхронизирует повороты головы и тела для единообразия отображения.
+         * Синхронизация поворотов при установке позиции.
          *
-         * @param x     Координата X
-         * @param y     Координата Y
-         * @param z     Координата Z
-         * @param yaw   Угол поворота по горизонтали
-         * @param pitch Угол поворота по вертикали
+         * @param x     X
+         * @param y     Y
+         * @param z     Z
+         * @param yaw   поворот по Y
+         * @param pitch наклон (не используется)
          */
         @Override
         public void setLocationAndAngles(double x, double y, double z, float yaw, float pitch) {
@@ -247,29 +248,33 @@ public class EntityExoskeleton extends ModElementRegistry.ModElement {
         }
 
         /**
-         * Обрабатывает взаимодействие игрока с экзоскелетом.
-         * Определяет кликнутый слот на основе высоты попадания и передает обработку утилите.
+         * Обрабатывает взаимодействие игрока: определяет кликнутый слот по высоте попадания
+         * и делегирует логику UtilEntityExoskeleton.
          *
-         * @param player Игрок, взаимодействующий с экзоскелетом
-         * @param hand   Рука, используемая для взаимодействия
-         * @return Всегда true - взаимодействие обработано
+         * @param player игрок
+         * @param hand   рука игрока
+         * @return true (взаимодействие обработано)
          */
         @Override
         public boolean processInteract(EntityPlayer player, EnumHand hand) {
             if (world.isRemote) return true;
+
             Vec3d eyesPos = player.getPositionEyes(1.0F);
             Vec3d lookVec = player.getLook(1.0F);
             Vec3d endPos = eyesPos.add(lookVec.x * 5, lookVec.y * 5, lookVec.z * 5);
             RayTraceResult rayTrace = getEntityBoundingBox().calculateIntercept(eyesPos, endPos);
             if (rayTrace == null) return true;
+
             float hitY = (float) (rayTrace.hitVec.y - posY);
-            EntityEquipmentSlot clickedSlot = SLOT_ORDER[3];
+            EntityEquipmentSlot clickedSlot = SLOT_ORDER[3]; // по умолчанию FEET
+
             for (int i = 0; i < SLOT_HEIGHT_THRESHOLDS.length; i++) {
                 if (hitY > SLOT_HEIGHT_THRESHOLDS[i]) {
                     clickedSlot = SLOT_ORDER[i];
                     break;
                 }
             }
+
             UtilEntityExoskeleton.handleInteraction(world, player, hand, this, clickedSlot);
             return true;
         }

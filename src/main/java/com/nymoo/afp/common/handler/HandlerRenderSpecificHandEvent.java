@@ -1,13 +1,16 @@
 package com.nymoo.afp.common.handler;
 
 import com.nymoo.afp.common.item.IPowerArmor;
+import com.nymoo.afp.common.item.ArmorExo;
 import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumHandSide;
@@ -18,49 +21,37 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.opengl.GL11;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Обработчик рендеринга руки от первого лица.
  *
  * Назначение:
- * - Подменяет стандартную руку на руку экзоскелета (силовой брони), когда на игроке надет нагрудник
- *   и основная рука пуста.
- * - Подбирает корректную текстуру по предмету нагрудника и применяет трансформации для позы взмаха/доставания.
- *
- * Детали:
- * - Кэширует пути текстур в {@link #textureCache}, чтобы не создавать {@link ResourceLocation} каждый кадр.
- * - Рендер выполняется только для основной руки, при пустом предмете в ней.
+ * - Подменяет стандартную руку на руку экзоскелета (силовой брони) при наличии нагрудника и пустой основной руке.
+ * - Биндит корректную текстуру и применяет трансформации для анимации взмаха/доставания.
  */
 @Mod.EventBusSubscriber
 public class HandlerRenderSpecificHandEvent {
-
-    // Кэш соответствия предмета нагрудника и пути к его текстуре
-    private static final Map<Item, ResourceLocation> textureCache = new HashMap<>();
-
     /**
-     * Перехватывает {@link RenderSpecificHandEvent} и рисует руку экзоскелета вместо стандартной.
+     * Перехватывает рендер основной руки и рисует модель экзоскелета вместо стандартной.
      *
      * Вход:
-     * - event: содержит руку, прогресс взмаха/доставания и текущий ItemStack.
+     * - event: событие рендера конкретной руки (прогресс взмаха, предмет в руке и т.д.).
      *
      * Логика:
-     * 1) Обрабатываем только MAIN_HAND и только при пустой руке.
-     * 2) Проверяем, что на груди надета силовая броня (IPowerArmor).
-     * 3) Применяем матрицы смещения/поворота под анимацию взмаха.
-     * 4) Выбираем модель брони ({@link PowerArmorModel}) и биндим её текстуру.
-     * 5) Рендерим соответствующую руку (левую/правую).
-     * 6) Отменяем стандартный рендер, чтобы не было дубля.
+     * 1) Обрабатывает только MAIN_HAND и только при пустой руке игрока.
+     * 2) Проверяет наличие нагрудника, реализующего IPowerArmor.
+     * 3) Вычисляет параметры анимации и применяет трансформации OpenGL.
+     * 4) Выбирает модель и текстуру (ванильный рендер при exo/сломанной броне или модель PowerArmor).
+     * 5) Рендерит соответствующую руку и блокирует стандартный рендер.
      *
      * Результат:
-     * - Рука экзоскелета отображается в кадре, стандартная рука скрыта.
+     * - На экране отображается рука экзоскелета или ванильная рука+экзомодель в зависимости от типа брони.
      *
-     * @param event событие рендеринга руки
+     * @param event событие рендеринга конкретной руки
      */
     @SubscribeEvent
     public static void onRenderSpecificHandEvent(RenderSpecificHandEvent event) {
-        EntityPlayer player = Minecraft.getMinecraft().player;
+        // Получаем клиента и игрока
+        AbstractClientPlayer player = Minecraft.getMinecraft().player;
         if (player == null) {
             return;
         }
@@ -70,70 +61,140 @@ public class HandlerRenderSpecificHandEvent {
             return;
         }
 
-        // Прерываем, если в руке есть предмет
+        // Предмет в руке — рендер экзорычи невозможен
+        // heldStack: предмет в основной руке игрока
         ItemStack heldStack = event.getItemStack();
         if (!heldStack.isEmpty()) {
             return;
         }
 
-        // Требуется нагрудник силовой брони
+        // chestplateStack: предмет в слоте нагрудника (должен быть силовой бронёй)
         ItemStack chestplateStack = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
         if (chestplateStack.isEmpty() || !(chestplateStack.getItem() instanceof IPowerArmor)) {
             return;
         }
 
-        // Вычисляем сторону ведущей руки и параметры анимации
+        // Определяем сторону основной руки и параметры анимации
+        // primaryHand: ведущая рука игрока
         EnumHandSide primaryHand = player.getPrimaryHand();
+        // isRightArm: флаг правой руки
         boolean isRightArm = primaryHand == EnumHandSide.RIGHT;
+        // swingProgress: прогресс взмаха/атаки
         float swingProgress = event.getSwingProgress();
+        // equipProgress: прогресс доставания/экипировки
         float equipProgress = event.getEquipProgress();
 
-        // Трансформации под анимацию взмаха/доставания
+        // Вычисления трансформаций для анимации взмаха
         float handSideMultiplier = isRightArm ? 1.0F : -1.0F;
         float swingSqrt = MathHelper.sqrt(swingProgress);
         float swingX = -0.3F * MathHelper.sin(swingSqrt * (float) Math.PI);
         float swingY = 0.4F * MathHelper.sin(swingSqrt * (float) Math.PI * 2F);
         float swingZ = -0.4F * MathHelper.sin(swingProgress * (float) Math.PI);
+
+        // Применяем базовые трансляции и повороты для позиции руки в кадре
         GlStateManager.translate(handSideMultiplier * (swingX + 0.64000005F), swingY + -0.6F + equipProgress * -0.6F, swingZ + -0.71999997F);
         GlStateManager.rotate(handSideMultiplier * 45.0F, 0.0F, 1.0F, 0.0F);
+
+        // Дополнительные повороты, усиливающие анимацию
         float swingSin = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
         float swingSqrtSin = MathHelper.sin(swingSqrt * (float) Math.PI);
         GlStateManager.rotate(handSideMultiplier * swingSqrtSin * 70.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(handSideMultiplier * swingSin * -20.0F, 0.0F, 0.0F, 1.0F);
 
-        // Дополнительные смещения для корректного положения руки в кадре
+        // Финальные смещения для корректного кадрирования руки
         GlStateManager.translate(handSideMultiplier * -1.0F, 3.6F, 3.5F);
         GlStateManager.rotate(handSideMultiplier * 120.0F, 0.0F, 0.0F, 1.0F);
         GlStateManager.rotate(200.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(handSideMultiplier * -135.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.translate(handSideMultiplier * 5.6F, 0.0F, 0.0F);
 
-        // Получаем модель брони и убеждаемся, что это PowerArmorModel
+        // Получаем модель брони, предоставленную предметом нагрудника
         ModelBiped bipedModel = chestplateStack.getItem().getArmorModel(player, chestplateStack, EntityEquipmentSlot.CHEST, null);
-        if (bipedModel == null || !(bipedModel instanceof PowerArmorModel)) {
+        if (bipedModel == null) {
             return;
         }
+
+        // Определяем тип брони и флаги состояния
+        IPowerArmor powerArmor = (IPowerArmor) chestplateStack.getItem();
+        String type = powerArmor.getPowerArmorType();
+        // isBroken: броня поломана
+        boolean isBroken = type.endsWith("_broken");
+        // isExo: тип экзоскелета (ванильный рендер + модель)
+        boolean isExo = type.equals("exo");
+
+        // Если броня сломана или это exo — сначала рендерим ванильную руку игрока
+        if (isBroken || isExo) {
+            // Биндим скин игрока и рендерим vanilla руку (левая/правая)
+            ResourceLocation skin = player.getLocationSkin();
+            Minecraft.getMinecraft().getTextureManager().bindTexture(skin);
+            GlStateManager.disableCull();
+            RenderManager renderManager = Minecraft.getMinecraft().getRenderManager();
+            boolean isSlim = "slim".equals(player.getSkinType());
+            RenderPlayer renderPlayer = new RenderPlayer(renderManager, isSlim);
+            if (isRightArm) {
+                renderPlayer.renderRightArm(player);
+            } else {
+                renderPlayer.renderLeftArm(player);
+            }
+            GlStateManager.enableCull();
+
+            // Затем биндим текстуру экзо-модели и готовим модель к рендеру
+            ResourceLocation exoTexture = new ResourceLocation("afp", "textures/models/armor/exo/exo_full.png");
+            Minecraft.getMinecraft().getTextureManager().bindTexture(exoTexture);
+            GlStateManager.disableCull();
+
+            // Выбираем подходящую бипед-модель: либо модель предмета, либо вспомогательная ArmorExo
+            ModelBiped biped;
+            if (isExo) {
+                biped = (ModelBiped) bipedModel;
+            } else {
+                biped = ArmorExo.getBipedModel(player, EntityEquipmentSlot.CHEST);
+            }
+
+            // Настраиваем позу модели и рендерим нужную руку
+            biped.setRotationAngles(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F, player);
+            if (isRightArm) {
+                biped.bipedRightArm.offsetY = 0.0F;
+                biped.bipedRightArm.rotateAngleX = 0.0F;
+                biped.bipedRightArm.render(0.0625F);
+            } else {
+                biped.bipedLeftArm.offsetY = 0.0F;
+                biped.bipedLeftArm.rotateAngleX = 0.0F;
+                biped.bipedLeftArm.render(0.0625F);
+            }
+            GlStateManager.enableCull();
+        }
+
+        // Если броня — чистый exo, отрабатываем ванильный рендер и выходим (не рисуем PowerArmorModel)
+        if (isExo) {
+            event.setCanceled(true);
+            return;
+        }
+
+        // Ожидаем модель типа PowerArmorModel для продолжения
+        if (!(bipedModel instanceof PowerArmorModel)) {
+            return;
+        }
+
         PowerArmorModel armorModel = (PowerArmorModel) bipedModel;
 
-        // Разрешаем текстуру нагрудника через кэш
-        Item armorItem = chestplateStack.getItem();
-        ResourceLocation texture = textureCache.computeIfAbsent(armorItem, item -> {
-            String registryPath = item.getRegistryName().getPath();
-            String armorType = registryPath.substring(0, registryPath.length() - "_chestplate".length());
-            return new ResourceLocation("afp", "textures/armor/" + armorType + "/" + armorType + ".png");
-        });
+        // Подготавливаем текстуру брони (учёт сломанной версии)
+        // baseType: базовый ключ типа брони (например "exo" или другое)
+        String baseType = armorModel.getBaseArmorType();
+        String textureSuffix = armorModel.isBroken() ? "_broken" : "";
+        ResourceLocation texture = new ResourceLocation("afp", "textures/models/armor/" + baseType + "/" + baseType + "_full" + textureSuffix + ".png");
         Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
 
-        // GL-состояние: сглаживание + прозрачность
+        // Настройка GL: отключаем отсечение, включаем смешивание и сглаживание
         GlStateManager.disableCull();
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.enableBlend();
 
-        // Настройка позы модели под текущее состояние игрока
+        // Применяем позу модели под текущего игрока
         armorModel.setRotationAngles(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F, player);
 
-        // Рендер нужной руки (сброс смещений для чистого кадра)
+        // Рендерим нужную руку модели экзоскелета (сброс локальных смещений)
         if (isRightArm) {
             armorModel.rightArm.offsetY = 0.0F;
             armorModel.rightArm.rotateAngleX = 0.0F;
@@ -144,12 +205,12 @@ public class HandlerRenderSpecificHandEvent {
             armorModel.leftArm.render(0.0625F);
         }
 
-        // Возврат GL-состояния
+        // Восстанавливаем GL-состояние
         GlStateManager.disableBlend();
         GlStateManager.shadeModel(GL11.GL_FLAT);
         GlStateManager.enableCull();
 
-        // Блокируем стандартный рендер руки
+        // Блокируем стандартный рендер руки, чтобы не было дубля
         event.setCanceled(true);
     }
 }

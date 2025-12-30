@@ -5,6 +5,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.Comparator;
 
+/**
+ * Компаратор для сортировки четырехугольников (Quad).
+ * Используется для правильной отрисовки полупрозрачных поверхностей путем сортировки по глубине.
+ */
 @SideOnly(Side.CLIENT)
 public class QuadComparator implements Comparator<Object> {
     private final float field_147630_a;

@@ -32,7 +32,7 @@ public class ItemFusionCore extends ModElementRegistry.ModElement {
     public static final Item itemFusionCore = null;
 
     public ItemFusionCore(ModElementRegistry instance) {
-        super(instance, 2);
+        super(instance, 3);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class ItemFusionCore extends ModElementRegistry.ModElement {
          * Отображает описание и текущий уровень истощения энергии ядра.
          *
          * @param stack   Стек предмета
-         * @param world   Мир, в котором отображается подсказка
+         * @param worldIn   Мир, в котором отображается подсказка
          * @param tooltip Список строк подсказки для добавления
          * @param flagIn  Флаг режима подсказки
          */

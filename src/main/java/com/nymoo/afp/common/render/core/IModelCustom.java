@@ -3,6 +3,10 @@ package com.nymoo.afp.common.render.core;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * Интерфейс для кастомных моделей.
+ * Определяет методы для рендеринга всей модели или её отдельных частей.
+ */
 @SideOnly(Side.CLIENT)
 public interface IModelCustom {
     String getType();

@@ -197,7 +197,7 @@ public class HandlerClientTickEvent {
             return false;
         }
         if (currentMode == 0 || currentMode == 1) {
-            if (!player.isSneaking() || !hasBooleanTag(chestStack, "soldered")) {
+            if (!player.isSneaking() || !hasBooleanTag(chestStack, "soldered") || ((IPowerArmor) chestStack.getItem()).getPowerArmorType().endsWith("_broken")) {
                 return false;
             }
             NBTTagCompound tagCompound = chestStack.getTagCompound();
@@ -283,7 +283,7 @@ public class HandlerClientTickEvent {
             return;
         }
         if (player.isSneaking()) {
-            if (hasBooleanTag(chestStack, "soldered")) {
+            if (hasBooleanTag(chestStack, "soldered") && !((IPowerArmor) chestStack.getItem()).getPowerArmorType().endsWith("_broken")) {
                 NBTTagCompound tagCompound = chestStack.getTagCompound();
                 boolean hasEnergy = tagCompound != null && tagCompound.hasKey("fusion_depletion");
                 if (!heldItem.isEmpty() && heldItem.getItem() == ItemFusionCore.itemFusionCore && !hasEnergy) {

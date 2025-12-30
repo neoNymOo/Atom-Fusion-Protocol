@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "afp:items/t51/t51_helmet_broken"
+  }
+}

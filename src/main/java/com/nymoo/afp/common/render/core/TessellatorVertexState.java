@@ -3,6 +3,10 @@ package com.nymoo.afp.common.render.core;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+/**
+ * Состояние вершин тесселятора.
+ * Хранит снимок буфера и флагов для последующего восстановления.
+ */
 @SideOnly(Side.CLIENT)
 public class TessellatorVertexState {
     private final int[] rawBuffer;
@@ -13,14 +17,14 @@ public class TessellatorVertexState {
     private final boolean hasNormals;
     private final boolean hasColor;
 
-    public TessellatorVertexState(int[] p_i45079_1_, int p_i45079_2_, int p_i45079_3_, boolean p_i45079_4_, boolean p_i45079_5_, boolean p_i45079_6_, boolean p_i45079_7_) {
-        this.rawBuffer = p_i45079_1_;
-        this.rawBufferIndex = p_i45079_2_;
-        this.vertexCount = p_i45079_3_;
-        this.hasTexture = p_i45079_4_;
-        this.hasBrightness = p_i45079_5_;
-        this.hasNormals = p_i45079_6_;
-        this.hasColor = p_i45079_7_;
+    public TessellatorVertexState(int[] buf, int idx, int count, boolean tex, boolean bright, boolean norm, boolean col) {
+        this.rawBuffer = buf;
+        this.rawBufferIndex = idx;
+        this.vertexCount = count;
+        this.hasTexture = tex;
+        this.hasBrightness = bright;
+        this.hasNormals = norm;
+        this.hasColor = col;
     }
 
     public int[] getRawBuffer() {

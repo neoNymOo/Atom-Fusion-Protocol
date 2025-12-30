@@ -1,6 +1,7 @@
 package com.nymoo.afp;
 
 import com.nymoo.afp.common.config.AFPConfig;
+import com.nymoo.afp.common.entity.ExoskeletonWorldGenerator;
 import com.nymoo.afp.common.handler.HandlerLivingJumpEvent;
 import com.nymoo.afp.proxy.IProxy;
 import net.minecraft.block.Block;
@@ -104,6 +105,7 @@ public class AtomFusionProtocol {
      */
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        GameRegistry.registerWorldGenerator(new ExoskeletonWorldGenerator(), 0);
         MinecraftForge.EVENT_BUS.register(new HandlerLivingJumpEvent());
         elements.getElements().forEach(element -> element.init(event));
         proxy.init(event);

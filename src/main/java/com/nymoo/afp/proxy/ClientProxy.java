@@ -32,17 +32,18 @@ public class ClientProxy implements IProxy {
     @Override
     @SideOnly(Side.CLIENT)
     public void preInit(FMLPreInitializationEvent event) {
-        String[] armorTypes = {"x03", "x02", "x01", "t60", "t51", "t45", "exo"};
+        String[] armorTypes = {"x03", "x02", "x01", "t60", "t51", "t45", "x03_broken", "x02_broken", "x01_broken", "t60_broken", "t51_broken", "t45_broken"};
         for (String armorType : armorTypes) {
+            boolean isBroken = armorType.endsWith("_broken");
             try {
                 // Предзагрузка моделей для всех слотов брони
-                new PowerArmorModel(0, armorType, false); // Шлем
-                new PowerArmorModel(1, armorType, false); // Нагрудник
-                if (!armorType.equals("exo")) {
-                    new PowerArmorModel(1, armorType, true); // Нагрудник с реактивным ранцем (кроме exo)
+                new PowerArmorModel(0, armorType, false, isBroken); // Шлем
+                new PowerArmorModel(1, armorType, false, isBroken); // Нагрудник
+                if (!isBroken && !armorType.equals("exo")) {
+                    new PowerArmorModel(1, armorType, true, isBroken); // Нагрудник с реактивным ранцем (кроме exo)
                 }
-                new PowerArmorModel(2, armorType, false); // Поножи
-                new PowerArmorModel(3, armorType, false); // Ботинки
+                new PowerArmorModel(2, armorType, false, isBroken); // Поножи
+                new PowerArmorModel(3, armorType, false, isBroken); // Ботинки
             } catch (Exception exception) {
                 System.err.println("Failed to preload model for " + armorType + ": " + exception.getMessage());
             }

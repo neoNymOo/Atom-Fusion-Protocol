@@ -1,5 +1,9 @@
 package com.nymoo.afp.common.render.core;
 
+/**
+ * Текстурная координата (UV/UVW).
+ * Определяет позицию на текстуре для наложения на модель.
+ */
 public class TextureCoordinate {
     public float u, v, w;
 

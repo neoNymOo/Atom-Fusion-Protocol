@@ -114,6 +114,16 @@ public abstract class MixinEntityPlayer extends Entity {
         ItemStack chestplate = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
         // Только если надета силовая броня
         if (chestplate.isEmpty() || !(chestplate.getItem() instanceof IPowerArmor)) return;
+
+        // Безопасный каст и получение типа брони
+        IPowerArmor armorItem = (IPowerArmor) chestplate.getItem();
+        String armorType = armorItem != null ? armorItem.getPowerArmorType() : null;
+
+        // Если тип брони null, или это "exo", или поломанная (endsWith "_broken") — выходим без предоставления дыхания
+        if (armorType == null || "exo".equals(armorType) || armorType.endsWith("_broken")) {
+            return;
+        }
+
         NBTTagCompound nbt = chestplate.getTagCompound();
         // Инициализируем NBT, если его нет
         if (nbt == null) {

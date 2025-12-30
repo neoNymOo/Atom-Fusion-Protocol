@@ -2,10 +2,8 @@ package com.nymoo.afp.common.item;
 
 import com.nymoo.afp.ModElementRegistry;
 import com.nymoo.afp.common.config.AFPConfig;
-import com.nymoo.afp.common.render.model.armor.PowerArmorModel;
 import com.nymoo.afp.common.util.UtilPowerArmor;
 import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -27,7 +25,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 @ModElementRegistry.ModElement.Tag
 public class ArmorExo extends ModElementRegistry.ModElement {
-
     @GameRegistry.ObjectHolder("afp:exo_helmet")
     public static final Item helmet = null;
     @GameRegistry.ObjectHolder("afp:exo_chestplate")
@@ -37,17 +34,6 @@ public class ArmorExo extends ModElementRegistry.ModElement {
     @GameRegistry.ObjectHolder("afp:exo_boots")
     public static final Item boots = null;
 
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel helmetModel;
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel chestplateModel;
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel chestplateModelJet;
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel leggingsModel;
-    @SideOnly(Side.CLIENT)
-    private PowerArmorModel bootsModel;
-
     public ArmorExo(ModElementRegistry instance) {
         super(instance, 8);
     }
@@ -55,7 +41,6 @@ public class ArmorExo extends ModElementRegistry.ModElement {
     @Override
     public void initElements() {
         AFPConfig.ArmorSet config = AFPConfig.getArmorSet("Exo");
-
         ItemArmor.ArmorMaterial enuma = EnumHelper.addArmorMaterial(
                 "exo",
                 "minecraft:diamond",
@@ -65,22 +50,18 @@ public class ArmorExo extends ModElementRegistry.ModElement {
                 net.minecraft.util.SoundEvent.REGISTRY.getObject(new ResourceLocation("")),
                 config.toughness
         );
-
         elements.items.add(() -> new ItemExoHelmet(enuma, 0, EntityEquipmentSlot.HEAD)
                 .setTranslationKey("exo_helmet")
                 .setRegistryName("exo_helmet")
                 .setCreativeTab(null));
-
         elements.items.add(() -> new ItemExoChestplate(enuma, 0, EntityEquipmentSlot.CHEST)
                 .setTranslationKey("exo_chestplate")
                 .setRegistryName("exo_chestplate")
                 .setCreativeTab(null));
-
         elements.items.add(() -> new ItemExoLeggings(enuma, 0, EntityEquipmentSlot.LEGS)
                 .setTranslationKey("exo_leggings")
                 .setRegistryName("exo_leggings")
                 .setCreativeTab(null));
-
         elements.items.add(() -> new ItemExoBoots(enuma, 0, EntityEquipmentSlot.FEET)
                 .setTranslationKey("exo_boots")
                 .setRegistryName("exo_boots")
@@ -90,10 +71,25 @@ public class ArmorExo extends ModElementRegistry.ModElement {
     @SideOnly(Side.CLIENT)
     @Override
     public void registerModels(ModelRegistryEvent event) {
-        ModelLoader.setCustomModelResourceLocation(helmet, 0, new ModelResourceLocation("afp:exo/exo_helmet", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(chestplate, 0, new ModelResourceLocation("afp:exo/exo_chestplate", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(leggings, 0, new ModelResourceLocation("afp:exo/exo_leggings", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(boots, 0, new ModelResourceLocation("afp:exo/exo_boots", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(helmet, 0, new net.minecraft.client.renderer.block.model.ModelResourceLocation("afp:exo/exo_helmet", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(chestplate, 0, new net.minecraft.client.renderer.block.model.ModelResourceLocation("afp:exo/exo_chestplate", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(leggings, 0, new net.minecraft.client.renderer.block.model.ModelResourceLocation("afp:exo/exo_leggings", "inventory"));
+        ModelLoader.setCustomModelResourceLocation(boots, 0, new net.minecraft.client.renderer.block.model.ModelResourceLocation("afp:exo/exo_boots", "inventory"));
+    }
+
+    @SideOnly(Side.CLIENT)
+    public static ModelBiped getBipedModel(EntityLivingBase entity, EntityEquipmentSlot slot) {
+        ModelBiped model = new ModelBiped(0.0F);
+        model.bipedHead.showModel = slot == EntityEquipmentSlot.HEAD;
+        model.bipedBody.showModel = (slot == EntityEquipmentSlot.CHEST) || (slot == EntityEquipmentSlot.LEGS);
+        model.bipedRightArm.showModel = slot == EntityEquipmentSlot.CHEST;
+        model.bipedLeftArm.showModel = slot == EntityEquipmentSlot.CHEST;
+        model.bipedRightLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+        model.bipedLeftLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+        model.isSneak = entity.isSneaking();
+        model.isRiding = entity.isRiding();
+        model.isChild = entity.isChild();
+        return model;
     }
 
     public class ItemExoHelmet extends ItemArmor implements IPowerArmor {
@@ -107,12 +103,8 @@ public class ArmorExo extends ModElementRegistry.ModElement {
         }
 
         @Override
-        @SideOnly(Side.CLIENT)
-        public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
-            if (helmetModel == null) {
-                helmetModel = new PowerArmorModel(0, "exo", false);
-            }
-            return helmetModel;
+        public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String type) {
+            return "afp:textures/models/armor/exo/exo_full.png";
         }
 
         @Override
@@ -123,6 +115,22 @@ public class ArmorExo extends ModElementRegistry.ModElement {
         @Override
         public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
             return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
+        }
+
+        @SideOnly(Side.CLIENT)
+        @Override
+        public ModelBiped getArmorModel(EntityLivingBase entity, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
+            ModelBiped model = new ModelBiped(0.0F);
+            model.bipedHead.showModel = slot == EntityEquipmentSlot.HEAD;
+            model.bipedBody.showModel = (slot == EntityEquipmentSlot.CHEST) || (slot == EntityEquipmentSlot.LEGS);
+            model.bipedRightArm.showModel = slot == EntityEquipmentSlot.CHEST;
+            model.bipedLeftArm.showModel = slot == EntityEquipmentSlot.CHEST;
+            model.bipedRightLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+            model.bipedLeftLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+            model.isSneak = entity.isSneaking();
+            model.isRiding = entity.isRiding();
+            model.isChild = entity.isChild();
+            return model;
         }
     }
 
@@ -137,12 +145,8 @@ public class ArmorExo extends ModElementRegistry.ModElement {
         }
 
         @Override
-        @SideOnly(Side.CLIENT)
-        public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
-            if (chestplateModel == null) {
-                chestplateModel = new PowerArmorModel(1, "exo", false);
-            }
-            return chestplateModel;
+        public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String type) {
+            return "afp:textures/models/armor/exo/exo_full.png";
         }
 
         @Override
@@ -160,6 +164,22 @@ public class ArmorExo extends ModElementRegistry.ModElement {
             UtilPowerArmor.handleStepSound(world, player);
             UtilPowerArmor.handleEnergyDepletion(world, player, itemStack);
         }
+
+        @SideOnly(Side.CLIENT)
+        @Override
+        public ModelBiped getArmorModel(EntityLivingBase entity, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
+            ModelBiped model = new ModelBiped(0.0F);
+            model.bipedHead.showModel = slot == EntityEquipmentSlot.HEAD;
+            model.bipedBody.showModel = (slot == EntityEquipmentSlot.CHEST) || (slot == EntityEquipmentSlot.LEGS);
+            model.bipedRightArm.showModel = slot == EntityEquipmentSlot.CHEST;
+            model.bipedLeftArm.showModel = slot == EntityEquipmentSlot.CHEST;
+            model.bipedRightLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+            model.bipedLeftLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+            model.isSneak = entity.isSneaking();
+            model.isRiding = entity.isRiding();
+            model.isChild = entity.isChild();
+            return model;
+        }
     }
 
     public class ItemExoLeggings extends ItemArmor implements IPowerArmor {
@@ -173,12 +193,8 @@ public class ArmorExo extends ModElementRegistry.ModElement {
         }
 
         @Override
-        @SideOnly(Side.CLIENT)
-        public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
-            if (leggingsModel == null) {
-                leggingsModel = new PowerArmorModel(2, "exo", false);
-            }
-            return leggingsModel;
+        public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String type) {
+            return "afp:textures/models/armor/exo/exo_full.png";
         }
 
         @Override
@@ -189,6 +205,22 @@ public class ArmorExo extends ModElementRegistry.ModElement {
         @Override
         public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
             return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
+        }
+
+        @SideOnly(Side.CLIENT)
+        @Override
+        public ModelBiped getArmorModel(EntityLivingBase entity, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
+            ModelBiped model = new ModelBiped(0.0F);
+            model.bipedHead.showModel = slot == EntityEquipmentSlot.HEAD;
+            model.bipedBody.showModel = (slot == EntityEquipmentSlot.CHEST) || (slot == EntityEquipmentSlot.LEGS);
+            model.bipedRightArm.showModel = slot == EntityEquipmentSlot.CHEST;
+            model.bipedLeftArm.showModel = slot == EntityEquipmentSlot.CHEST;
+            model.bipedRightLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+            model.bipedLeftLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+            model.isSneak = entity.isSneaking();
+            model.isRiding = entity.isRiding();
+            model.isChild = entity.isChild();
+            return model;
         }
     }
 
@@ -203,12 +235,8 @@ public class ArmorExo extends ModElementRegistry.ModElement {
         }
 
         @Override
-        @SideOnly(Side.CLIENT)
-        public ModelBiped getArmorModel(EntityLivingBase living, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
-            if (bootsModel == null) {
-                bootsModel = new PowerArmorModel(3, "exo", false);
-            }
-            return bootsModel;
+        public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String type) {
+            return "afp:textures/models/armor/exo/exo_full.png";
         }
 
         @Override
@@ -219,6 +247,22 @@ public class ArmorExo extends ModElementRegistry.ModElement {
         @Override
         public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
             return new ActionResult<>(EnumActionResult.FAIL, playerIn.getHeldItem(handIn));
+        }
+
+        @SideOnly(Side.CLIENT)
+        @Override
+        public ModelBiped getArmorModel(EntityLivingBase entity, ItemStack stack, EntityEquipmentSlot slot, ModelBiped defaultModel) {
+            ModelBiped model = new ModelBiped(0.0F);
+            model.bipedHead.showModel = slot == EntityEquipmentSlot.HEAD;
+            model.bipedBody.showModel = (slot == EntityEquipmentSlot.CHEST) || (slot == EntityEquipmentSlot.LEGS);
+            model.bipedRightArm.showModel = slot == EntityEquipmentSlot.CHEST;
+            model.bipedLeftArm.showModel = slot == EntityEquipmentSlot.CHEST;
+            model.bipedRightLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+            model.bipedLeftLeg.showModel = (slot == EntityEquipmentSlot.LEGS) || (slot == EntityEquipmentSlot.FEET);
+            model.isSneak = entity.isSneaking();
+            model.isRiding = entity.isRiding();
+            model.isChild = entity.isChild();
+            return model;
         }
     }
 }

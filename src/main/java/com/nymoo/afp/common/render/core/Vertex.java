@@ -1,5 +1,9 @@
 package com.nymoo.afp.common.render.core;
 
+/**
+ * Вершина в трехмерном пространстве.
+ * Базовый элемент геометрии модели.
+ */
 public class Vertex {
     public float x, y, z;
 

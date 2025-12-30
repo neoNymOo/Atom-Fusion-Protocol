@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "afp:item/exo/exo_helmet"
+    "layer0": "afp:items/exo/exo_helmet"
   }
 }
